@@ -2,121 +2,133 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Protox Whiteboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Protox Whiteboard Final</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* Reset & Base */
+/* --- STYLES --- */
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:sans-serif;overflow:hidden;background:#f5f5f5;user-select:none}
-/* Canvas */
-#c{position:absolute;top:0;left:0;cursor:crosshair;touch-action:none}
-/* Toolbar */
-.tb{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:8px;z-index:100}
-.btn{width:36px;height:36px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+body{font-family:sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
+/* Canvas Layer */
+#c{position:absolute;top:0;left:0;z-index:0;touch-action:none}
+/* UI Layer (Above Canvas) */
+.tb{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:8px;z-index:1000}
+.btn{width:36px;height:36px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:0.1s}
 .btn:hover{background:#f0f7ff;border-color:#4a90e2}
 .btn.on{background:#4a90e2;color:#fff;border-color:#4a90e2}
 .sep{width:1px;height:24px;background:#ddd;align-self:center}
 /* Inputs */
 input[type=color]{width:30px;height:30px;border:none;cursor:pointer;background:none}
 input[type=range]{width:80px;cursor:pointer}
-/* Notes & Text */
-.sn{position:absolute;width:200px;background:#feff9c;box-shadow:0 4px 10px rgba(0,0,0,0.2);border-radius:4px;z-index:10}
-.sh{height:24px;background:rgba(0,0,0,0.05);cursor:move;display:flex;justify-content:flex-end;padding:2px}
-.close{background:#ff5555;color:white;border:none;width:20px;border-radius:50%;cursor:pointer;font-weight:bold}
-textarea{width:100%;height:120px;border:none;background:none;padding:8px;resize:vertical;outline:none}
-.tx{position:absolute;background:rgba(255,255,255,0.9);border:1px solid #333;padding:2px;border-radius:4px;z-index:10}
-.tx input{border:none;background:none;outline:none;font-size:16px;min-width:150px}
+/* Notes & Text (World Layer) */
+.sn, .tx{position:absolute;will-change:transform, left, top;z-index:10}
+.sn{width:200px;background:#feff9c;box-shadow:0 4px 10px rgba(0,0,0,0.2);border-radius:4px;display:flex;flex-direction:column}
+.sh{height:24px;background:rgba(0,0,0,0.08);cursor:grab;display:flex;justify-content:flex-end;padding:2px;border-radius:4px 4px 0 0}
+.sh:active{cursor:grabbing}
+.close{background:#ff5555;color:white;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-weight:bold;line-height:1}
+textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none;font-family:inherit;min-height:120px}
+.tx{background:rgba(255,255,255,0.85);border:1px solid #333;padding:4px;border-radius:4px}
+.th{height:16px;background:rgba(0,0,0,0.1);cursor:grab;margin-bottom:2px;border-radius:2px}
+.tx input{border:none;background:none;outline:none;font-size:16px;min-width:150px;font-family:inherit}
 /* Status */
-#status{position:fixed;bottom:10px;left:10px;background:white;padding:5px 10px;border-radius:20px;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px}
+#status{position:fixed;bottom:10px;left:10px;background:white;padding:5px 10px;border-radius:20px;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px;z-index:1000}
 .dot{width:8px;height:8px;border-radius:50%;background:#ccc}
 .dot.ok{background:#2ecc71} .dot.load{background:#f1c40f} .dot.err{background:#e74c3c}
+.zc{position:fixed;bottom:15px;right:15px;background:#fff;padding:5px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;gap:4px;z-index:1000}
+.zb{padding:5px 10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-weight:bold}
+.zl{font-size:12px;min-width:45px;text-align:center;line-height:28px;font-weight:600}
 </style>
 </head>
 <body>
 
 <!-- TOOLBAR -->
 <div class="tb">
-    <button class="btn on" onclick="setT('s',this)" title="Move">✋</button>
-    <button class="btn" onclick="setT('n',this)" title="Note">📝</button>
+    <button class="btn on" onclick="setT('s',this)" title="Hand (Move Board)">✋</button>
+    <button class="btn" onclick="setT('n',this)" title="Sticky Note">📝</button>
     <button class="btn" onclick="setT('t',this)" title="Text">🔤</button>
     <div class="sep"></div>
     <button class="btn" onclick="setT('d',this)" title="Draw">✏️</button>
-    <button class="btn" onclick="setT('r',this)" title="Rect">⬜</button>
+    <button class="btn" onclick="setT('r',this)" title="Rectangle">⬜</button>
     <button class="btn" onclick="setT('c',this)" title="Circle">⭕</button>
     <div class="sep"></div>
     <input type="color" id="col" value="#000000">
-    <input type="range" id="sz" min="1" max="20" value="3">
+    <input type="range" id="sz" min="2" max="20" value="3" title="Size">
     <div class="sep"></div>
-    <button class="btn" onclick="wipe()" title="Clear">🗑️</button>
+    <button class="btn" onclick="wipe()" title="Delete All">🗑️</button>
 </div>
 
+<!-- STATUS & ZOOM -->
 <div id="status"><div class="dot" id="sd"></div><span id="st">Connecting...</span></div>
+<div class="zc">
+    <button class="zb" onclick="zoom(-1)">−</button>
+    <span class="zl" id="zl">100%</span>
+    <button class="zb" onclick="zoom(1)">+</button>
+</div>
+
 <canvas id="c"></canvas>
 
 <script>
-// --- CONFIG START ---
-const SB_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co/'; 
+// --- CONFIG ---
+const SB_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co'; 
 const SB_KEY = 'sb_publishable_ntQsU9qIUGNVRNlhY9NErA_POoAFWat';
-// --- CONFIG END ---
+// --------------
 
-// 1. Setup & Vars
 const c = document.getElementById('c'), ctx = c.getContext('2d', {alpha:false});
 const col = document.getElementById('col'), sz = document.getElementById('sz');
 const sd = document.getElementById('sd'), st = document.getElementById('st');
 const ROOM = new URLSearchParams(location.search).get('raum') || 'lobby';
+document.title = "Board: " + ROOM;
 
+// State
 let t='s', dragging=false, panning=false, sx, sy, ox=0, oy=0, z=1, el=[], dp=[], remote=false, loaded=false;
 let saveTimer;
 
-// 2. Immediate Whiteboard Draw (Prevents Black Screen)
-function resize() { c.width=innerWidth; c.height=innerHeight; draw(); }
-window.onresize = resize;
-
-// 3. Supabase Logic
+// Init Supabase
 const { createClient } = supabase;
 const sb = createClient(SB_URL, SB_KEY);
 
+function resize() { c.width=innerWidth; c.height=innerHeight; draw(); }
+window.onresize = resize;
+
 async function init() {
     sd.className='dot load'; st.innerText='Loading ' + ROOM;
-    resize(); // Draw white background immediately
+    resize();
     
     try {
-        // Load or Create Room
         let { data, error } = await sb.from('board').select('content').eq('id', ROOM).single();
         
         if (error && error.code === 'PGRST116') {
             await sb.from('board').insert({ id: ROOM, content: {} });
             data = { content: {} };
-        } else if(error) throw error;
-
-        if (data && data.content) apply(data.content, true);
+        } 
         
+        if (data && data.content) apply(data.content, true);
         loaded = true;
         sd.className='dot ok'; st.innerText='Online: ' + ROOM;
 
-        // Realtime
         sb.channel('wb').on('postgres_changes', 
             { event: 'UPDATE', schema: 'public', table: 'board', filter: `id=eq.${ROOM}` }, 
             (p) => { if(p.new.content) { remote=true; apply(p.new.content, false); remote=false; } }
         ).subscribe();
-        
     } catch (e) {
-        sd.className='dot err'; st.innerText='Error (Check DB/Console)';
-        console.error("Supabase Error:", e);
-        alert("Fehler! Hast du Schritt 1 (SQL) ausgeführt? Schau in die Konsole (F12).");
+        sd.className='dot err'; st.innerText='Error (Check Key/Console)';
+        console.error(e);
     }
 }
 
-// 4. Drawing Logic
+// --- RENDER ENGINE ---
+
 function draw() {
+    // 1. Clear & Background
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0,0,c.width,c.height); // White Background
+    ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0,0,c.width,c.height);
+    
+    // 2. Apply Transform
     ctx.translate(ox, oy); ctx.scale(z, z);
     
-    // Draw Saved Elements
+    // 3. Draw Elements
     el.forEach(e => {
-        ctx.lineWidth = e.w; ctx.strokeStyle = e.col; ctx.fillStyle = e.col;
+        ctx.lineWidth = e.lw || 2; ctx.strokeStyle = e.col; ctx.fillStyle = e.col;
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
         ctx.beginPath();
         if(e.t==='p') {
@@ -132,44 +144,81 @@ function draw() {
         }
     });
 
-    // Draw Current Stroke
-    if(dragging && t==='d' && dp.length>1) {
+    // 4. Current Stroke (Preview)
+    if(dragging && dp.length>1 && t!=='s') {
         ctx.lineWidth = parseInt(sz.value); ctx.strokeStyle = col.value;
         ctx.lineCap='round'; ctx.lineJoin='round';
-        ctx.beginPath(); ctx.moveTo(dp[0].x, dp[0].y);
-        dp.forEach(p=>ctx.lineTo(p.x,p.y));
-        ctx.stroke();
+        if(t==='d') {
+            ctx.beginPath(); ctx.moveTo(dp[0].x, dp[0].y);
+            dp.forEach(p=>ctx.lineTo(p.x,p.y));
+            ctx.stroke();
+        } else if(t==='r' || t==='c') {
+            const start=dp[0];
+            const curr=dp[dp.length-1];
+            const w=Math.abs(curr.x-start.x), h=Math.abs(curr.y-start.y);
+            const x=Math.min(curr.x,start.x), y=Math.min(curr.y,start.y);
+            ctx.beginPath();
+            if(t==='r') ctx.strokeRect(x,y,w,h);
+            else { const r=Math.sqrt(w**2+h**2)/2; ctx.arc(x+w/2,y+h/2,r,0,Math.PI*2); ctx.stroke(); }
+        }
     }
+
+    // 5. Update DOM Elements (Sticky Notes) Position
+    updateDOMPos();
 }
 
-// 5. Sync Logic
+function updateDOMPos() {
+    document.querySelectorAll('.sn, .tx').forEach(div => {
+        // Get World Coords
+        const wx = parseFloat(div.dataset.wx);
+        const wy = parseFloat(div.dataset.wy);
+        // Calculate Screen Coords
+        const screenX = wx * z + ox;
+        const screenY = wy * z + oy;
+        div.style.left = screenX + 'px';
+        div.style.top = screenY + 'px';
+        // Optional: Scale effect (can be removed if text gets too blurry)
+        // div.style.transform = `scale(${z})`; 
+        // div.style.transformOrigin = '0 0';
+    });
+}
+
+// --- LOGIC ---
+
 function apply(d, force) {
     el = d.el || [];
-    draw();
     
-    // Sync DOM Elements (Notes/Text)
     const active = document.activeElement;
     const keep = new Set();
     
+    // Sync Notes
     (d.notes||[]).forEach(n => {
         keep.add(n.id);
         let div = document.querySelector(`.sn[data-id="${n.id}"]`);
-        if(!div) div = domItem('sn', n.id, n.x, n.y, n.bg);
-        div.style.left=n.x+'px'; div.style.top=n.y+'px'; div.style.background=n.bg;
+        if(!div) div = createDOM('sn', n.id, n.x, n.y, n.bg);
+        
+        // Update World Coords
+        div.dataset.wx = n.x; div.dataset.wy = n.y;
+        div.style.background = n.bg;
+        
         const ta = div.querySelector('textarea');
         if(force || active!==ta) ta.value = n.txt;
     });
 
+    // Sync Text
     (d.texts||[]).forEach(n => {
         keep.add(n.id);
         let div = document.querySelector(`.tx[data-id="${n.id}"]`);
-        if(!div) div = domItem('tx', n.id, n.x, n.y);
-        div.style.left=n.x+'px'; div.style.top=n.y+'px';
+        if(!div) div = createDOM('tx', n.id, n.x, n.y);
+        
+        div.dataset.wx = n.x; div.dataset.wy = n.y;
+        
         const inp = div.querySelector('input');
         if(force || active!==inp) inp.value = n.txt;
     });
     
     document.querySelectorAll('.sn,.tx').forEach(e => { if(!keep.has(e.dataset.id)) e.remove(); });
+    draw();
 }
 
 function save() {
@@ -178,11 +227,11 @@ function save() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
         const notes = Array.from(document.querySelectorAll('.sn')).map(n => ({
-            id: n.dataset.id, x: parseInt(n.style.left), y: parseInt(n.style.top), 
+            id: n.dataset.id, x: parseFloat(n.dataset.wx), y: parseFloat(n.dataset.wy), 
             bg: n.style.background, txt: n.querySelector('textarea').value
         }));
         const texts = Array.from(document.querySelectorAll('.tx')).map(t => ({
-            id: t.dataset.id, x: parseInt(t.style.left), y: parseInt(t.style.top), 
+            id: t.dataset.id, x: parseFloat(t.dataset.wx), y: parseFloat(t.dataset.wy), 
             txt: t.querySelector('input').value
         }));
         
@@ -191,25 +240,120 @@ function save() {
     }, 500);
 }
 
-// 6. Interaction
+// --- INTERACTION ---
+
 function setT(mode, btn) {
     t = mode;
     document.querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
 }
 
+function zoom(dir) {
+    const oldZ = z;
+    if(dir>0) z = Math.min(z*1.2, 5);
+    else z = Math.max(z/1.2, 0.1);
+    
+    // Zoom towards center
+    const cx = c.width/2; const cy = c.height/2;
+    ox = cx - (cx - ox) * (z/oldZ);
+    oy = cy - (cy - oy) * (z/oldZ);
+    
+    document.getElementById('zl').innerText = Math.round(z*100)+'%';
+    draw();
+}
+
 c.onmousedown = e => {
     sx=e.clientX; sy=e.clientY;
-    const rx=(e.clientX-ox)/z, ry=(e.clientY-oy)/z;
+    // Calc World Coords of Mouse
+    const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
+    
     if(t==='s') { panning=true; c.style.cursor='grabbing'; }
-    else if(t==='n') domItem('sn', null, sx, sy);
-    else if(t==='t') domItem('tx', null, sx, sy);
-    else { dragging=true; dp=[{x:rx,y:ry}]; }
+    else if(t==='n') createDOM('sn', null, wx, wy);
+    else if(t==='t') createDOM('tx', null, wx, wy);
+    else { dragging=true; dp=[{x:wx,y:wy}]; }
 };
 
 c.onmousemove = e => {
     if(panning) { ox+=e.clientX-sx; oy+=e.clientY-sy; sx=e.clientX; sy=e.clientY; draw(); }
     else if(dragging) {
-        const rx=(e.clientX-ox)/z, ry=(e.clientY-oy)/z;
-        if(t==='d') { dp.push({x:rx,y:ry}); draw(); }
-        // For rect/circle preview, we just draw logic would go here
+        const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
+        dp.push({x:wx,y:wy}); draw();
+    }
+};
+
+c.onmouseup = e => {
+    if(panning) { panning=false; c.style.cursor='default'; }
+    else if(dragging) {
+        dragging=false;
+        const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
+        const start=dp[0];
+        const lw = parseInt(sz.value);
+        
+        if(t==='d' && dp.length>1) el.push({t:'p', pts:dp, col:col.value, lw:lw});
+        else if(t==='r'||t==='c') {
+            const w=Math.abs(wx-start.x), h=Math.abs(wy-start.y);
+            if(w>2) el.push({t, x:Math.min(wx,start.x), y:Math.min(wy,start.y), w, h, col:col.value, lw:lw});
+        }
+        dp=[]; draw(); save();
+    }
+};
+
+c.onwheel = e => { e.preventDefault(); zoom(e.deltaY<0 ? 1 : -1); };
+
+function createDOM(type, id, wx, wy, bg) {
+    const div = document.createElement('div');
+    div.className = type; 
+    div.dataset.id = id || Math.random().toString(36).substr(2,9);
+    div.dataset.wx = wx; div.dataset.wy = wy; // Store World Position
+    if(bg) div.style.background = bg;
+    
+    const h = document.createElement('div'); h.className = type==='sn'?'sh':'th';
+    const b = document.createElement('button'); b.className='close'; b.innerHTML='×';
+    b.onclick = () => { div.remove(); save(); };
+    
+    // Drag Logic for DOM (Updates World Coords)
+    h.onmousedown = e => {
+        e.stopPropagation(); // Don't trigger canvas
+        if(e.target===b) return; 
+        e.preventDefault();
+        let lx=e.clientX, ly=e.clientY;
+        
+        const moveHandler = em => {
+            const dx = (em.clientX - lx) / z; // Delta in World Units
+            const dy = (em.clientY - ly) / z;
+            
+            div.dataset.wx = parseFloat(div.dataset.wx) + dx;
+            div.dataset.wy = parseFloat(div.dataset.wy) + dy;
+            
+            lx=em.clientX; ly=em.clientY;
+            updateDOMPos(); // Re-calc screen position
+        };
+        const upHandler = () => { 
+            document.removeEventListener('mousemove', moveHandler);
+            document.removeEventListener('mouseup', upHandler);
+            save(); 
+        };
+        document.addEventListener('mousemove', moveHandler);
+        document.addEventListener('mouseup', upHandler);
+    };
+    
+    div.appendChild(h);
+    const inp = type==='sn' ? document.createElement('textarea') : document.createElement('input');
+    inp.onmousedown = e => e.stopPropagation(); // Allow clicking text without drawing on canvas
+    inp.oninput = save;
+    div.appendChild(inp);
+    h.appendChild(b);
+    document.body.appendChild(div);
+    
+    updateDOMPos(); // Set initial screen pos
+    
+    if(!remote && !id) { save(); setTimeout(()=>inp.focus(),10); }
+    return div;
+}
+
+function wipe() { if(confirm('Alles löschen?')) { el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } }
+
+init();
+</script>
+</body>
+</html>
