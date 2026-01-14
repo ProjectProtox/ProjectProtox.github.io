@@ -3,12 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Protox Whiteboard Final</title>
+<title>Protox Whiteboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* --- STYLES --- */
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
+body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
+
+/* --- HOMESCREEN STYLES --- */
+#home-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #f5f5f5; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.card {
+    background: white; padding: 40px; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center;
+    width: 90%; max-width: 400px;
+}
+.card h1 { margin-bottom: 20px; font-size: 24px; color: #333; }
+.card input {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    border: 2px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; transition: 0.2s;
+}
+.card input:focus { border-color: #4a90e2; }
+.card button {
+    width: 100%; padding: 12px; background: #4a90e2; color: white;
+    border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.card button:hover { background: #357abd; }
+
+/* --- WHITEBOARD STYLES --- */
+/* Elements hidden by default until room is joined */
+.wb-ui { display: none; }
+
 /* Canvas Layer */
 #c{position:absolute;top:0;left:0;z-index:0;touch-action:none}
 /* UI Layer (Above Canvas) */
@@ -41,8 +69,18 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
 </head>
 <body>
 
-<!-- TOOLBAR -->
-<div class="tb">
+<!-- HOMESCREEN (Visible if no room selected) -->
+<div id="home-screen" style="display: none;">
+    <div class="card">
+        <h1>Protox Whiteboard</h1>
+        <p style="margin-bottom: 15px; color: #666; font-size: 14px;">Enter a room name to join a session.</p>
+        <input type="text" id="roomInput" placeholder="e.g. LAN_Party_2026" onkeydown="if(event.key==='Enter') joinRoom()">
+        <button onclick="joinRoom()">Join Room</button>
+    </div>
+</div>
+
+<!-- WHITEBOARD UI (Wrapped in class wb-ui for toggling) -->
+<div class="tb wb-ui">
     <button class="btn on" onclick="setT('s',this)" title="Hand (Move Board)">✋</button>
     <button class="btn" onclick="setT('n',this)" title="Sticky Note">📝</button>
     <button class="btn" onclick="setT('t',this)" title="Text">🔤</button>
@@ -57,15 +95,14 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
     <button class="btn" onclick="wipe()" title="Delete All">🗑️</button>
 </div>
 
-<!-- STATUS & ZOOM -->
-<div id="status"><div class="dot" id="sd"></div><span id="st">Connecting...</span></div>
-<div class="zc">
+<div id="status" class="wb-ui"><div class="dot" id="sd"></div><span id="st">Connecting...</span></div>
+<div class="zc wb-ui">
     <button class="zb" onclick="zoom(-1)">−</button>
     <span class="zl" id="zl">100%</span>
     <button class="zb" onclick="zoom(1)">+</button>
 </div>
 
-<canvas id="c"></canvas>
+<canvas id="c" class="wb-ui"></canvas>
 
 <script>
 // --- CONFIG ---
@@ -73,11 +110,39 @@ const SB_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co';
 const SB_KEY = 'sb_publishable_ntQsU9qIUGNVRNlhY9NErA_POoAFWat';
 // --------------
 
+// --- ROUTING LOGIC ---
+const urlParams = new URLSearchParams(location.search);
+const ROOM = urlParams.get('raum');
+
+if (!ROOM) {
+    // No Room? Show Homescreen
+    document.getElementById('home-screen').style.display = 'flex';
+} else {
+    // Room exists? Show Whiteboard & Init
+    document.querySelectorAll('.wb-ui').forEach(el => el.style.display = 'flex');
+    document.getElementById('c').style.display = 'block'; // Canvas needs block
+    document.title = "Board: " + ROOM;
+    // Start App
+    setTimeout(init, 10); 
+}
+
+function joinRoom() {
+    const input = document.getElementById('roomInput');
+    const val = input.value.trim().replace(/[^a-zA-Z0-9_-]/g, '_'); // Simple cleanup
+    if(val) {
+        window.location.search = '?raum=' + val;
+    } else {
+        alert("Please enter a room name");
+    }
+}
+
+// ============================================
+// --- WHITEBOARD APP LOGIC BELOW ---
+// ============================================
+
 const c = document.getElementById('c'), ctx = c.getContext('2d', {alpha:false});
 const col = document.getElementById('col'), sz = document.getElementById('sz');
 const sd = document.getElementById('sd'), st = document.getElementById('st');
-const ROOM = new URLSearchParams(location.search).get('raum') || 'lobby';
-document.title = "Board: " + ROOM;
 
 // State
 let t='s', dragging=false, panning=false, sx, sy, ox=0, oy=0, z=1, el=[], dp=[], remote=false, loaded=false;
@@ -177,9 +242,6 @@ function updateDOMPos() {
         const screenY = wy * z + oy;
         div.style.left = screenX + 'px';
         div.style.top = screenY + 'px';
-        // Optional: Scale effect (can be removed if text gets too blurry)
-        // div.style.transform = `scale(${z})`; 
-        // div.style.transformOrigin = '0 0';
     });
 }
 
@@ -352,8 +414,6 @@ function createDOM(type, id, wx, wy, bg) {
 }
 
 function wipe() { if(confirm('Alles löschen?')) { el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } }
-
-init();
 </script>
 </body>
 </html>
