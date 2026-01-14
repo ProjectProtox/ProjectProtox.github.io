@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LAN Party Whiteboard</title>
+<title>LAN Multi-Board</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -61,10 +61,15 @@ body{font-family:system-ui,-apple-system,sans-serif;overflow:hidden;background:#
 // HIER DEINE DATEN EINFÜGEN (VON SUPABASE)
 // ==========================================
 
-const SUPABASE_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co/';
-const SUPABASE_KEY = 'sb_publishable_ntQsU9qIUGNVRNlhY9NErA_POoAFWat'; 
+const SUPABASE_URL = 'https://HIER_DEINE_URL_EINFÜGEN.supabase.co';
+const SUPABASE_KEY = 'HIER_DEINEN_KEY_EINFÜGEN'; 
 
 // ==========================================
+
+// Room ID from URL (default: 'lobby')
+const urlParams = new URLSearchParams(window.location.search);
+const ROOM_ID = urlParams.get('raum') || 'lobby';
+document.title = "Whiteboard: " + ROOM_ID;
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -72,7 +77,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const c=document.getElementById('c'),x=c.getContext('2d',{alpha:false,desynchronized:true});
 const col=document.getElementById('col'),psz=document.getElementById('psz');
 const cdot=document.getElementById('cdot'),pdot=document.getElementById('pdot');
-let t='s',dr=0,pn=0,sx,sy,ox=0,oy=0,z=1,el=[],rf=null,pw=2,dp=[], remote=false;
+let t='s',dr=0,pn=0,sx,sy,ox=0,oy=0,z=1,el=[],rf=null,pw=2,dp=[], remote=false, loaded=false;
 
 col.oninput=()=>cdot.style.background=col.value;
 psz.oninput=()=>{pw=parseInt(psz.value);upd()};
@@ -80,30 +85,56 @@ function upd(){const s=pw*2+6;pdot.style.width=s+'px';pdot.style.height=s+'px'}
 upd();cdot.style.background=col.value;
 
 async function load(){
- const {data}=await sb.from('board').select('content').eq('id',1).single();
+ const {data}=await sb.from('board').select('content').eq('id',ROOM_ID).single();
  if(data&&data.content) apply(data.content);
- document.getElementById('status').innerText="Online";
+ else await sb.from('board').insert({id:ROOM_ID, content:{}}).select(); // Auto-create room
+ loaded = true;
+ document.getElementById('status').innerText="Online: " + ROOM_ID;
 }
-sb.channel('r').on('postgres_changes',{event:'UPDATE',schema:'public',table:'board',filter:'id=eq.1'},p=>{
+
+sb.channel('r').on('postgres_changes',{event:'UPDATE',schema:'public',table:'board',filter:`id=eq.${ROOM_ID}`},p=>{
  if(p.new&&p.new.content){remote=true;apply(p.new.content);remote=false;}
 }).subscribe();
 
 function apply(d){
  el=d.el||[];
- document.querySelectorAll('.sn,.tx').forEach(e=>e.remove());
- (d.notes||[]).forEach(n=>mk_sn(n.x,n.y,n.bg,n.txt,n.id));
- (d.texts||[]).forEach(t=>mk_tx(t.x,t.y,t.txt,t.id));
- rd();
+ rd(); 
+ const currentIds = new Set();
+ (d.notes||[]).forEach(n=>{
+  currentIds.add(n.id);
+  const ex = document.querySelector(`.sn[data-id="${n.id}"]`);
+  if(ex){
+    ex.style.left=n.x+'px'; ex.style.top=n.y+'px'; ex.style.background=n.bg;
+    const ta = ex.querySelector('textarea');
+    if(document.activeElement !== ta) ta.value = n.txt;
+  } else {
+    mk_sn(n.x,n.y,n.bg,n.txt,n.id);
+  }
+ });
+ (d.texts||[]).forEach(t=>{
+  currentIds.add(t.id);
+  const ex = document.querySelector(`.tx[data-id="${t.id}"]`);
+  if(ex){
+    ex.style.left=t.x+'px'; ex.style.top=t.y+'px';
+    const inp = ex.querySelector('input');
+    if(document.activeElement !== inp) inp.value = t.txt;
+  } else {
+    mk_tx(t.x,t.y,t.txt,t.id);
+  }
+ });
+ document.querySelectorAll('.sn,.tx').forEach(e=>{
+   if(!currentIds.has(e.dataset.id)) e.remove();
+ });
 }
 
 let savetimer;
 function sv(){
- if(remote)return;
+ if(remote || !loaded) return;
  clearTimeout(savetimer);
  savetimer=setTimeout(async()=>{
-  const notes=Array.from(document.querySelectorAll('.sn')).map(n=>({id:n.d_id,x:parseInt(n.style.left),y:parseInt(n.style.top),bg:n.style.background,txt:n.querySelector('textarea').value}));
-  const texts=Array.from(document.querySelectorAll('.tx')).map(t=>({id:t.d_id,x:parseInt(t.style.left),y:parseInt(t.style.top),txt:t.querySelector('input').value}));
-  await sb.from('board').update({content:{el,notes,texts}}).eq('id',1);
+  const notes=Array.from(document.querySelectorAll('.sn')).map(n=>({id:n.dataset.id,x:parseInt(n.style.left),y:parseInt(n.style.top),bg:n.style.background,txt:n.querySelector('textarea').value}));
+  const texts=Array.from(document.querySelectorAll('.tx')).map(t=>({id:t.dataset.id,x:parseInt(t.style.left),y:parseInt(t.style.top),txt:t.querySelector('input').value}));
+  await sb.from('board').update({content:{el,notes,texts}}).eq('id',ROOM_ID);
  },500);
 }
 
@@ -148,7 +179,8 @@ c.onmouseup=e=>{
 function uid(){return Math.random().toString(36).substr(2,9);}
 
 function mk_sn(x,y,bg,txt,id){
- const n=document.createElement('div');n.className='sn';n.style.left=x+'px';n.style.top=y+'px';n.style.background=bg||col.value;n.d_id=id||uid();
+ const n=document.createElement('div');n.className='sn';n.style.left=x+'px';n.style.top=y+'px';n.style.background=bg||col.value;
+ n.dataset.id=id||uid();
  const h=document.createElement('div');h.className='sh';
  const dh=document.createElement('span');dh.className='dh';dh.textContent='⋮⋮';h.appendChild(dh);
  const db=document.createElement('button');db.className='db';db.innerHTML='×';db.onclick=()=>{n.remove();sv()};h.appendChild(db);n.appendChild(h);
@@ -157,7 +189,8 @@ function mk_sn(x,y,bg,txt,id){
 }
 
 function mk_tx(x,y,txt,id){
- const tb=document.createElement('div');tb.className='tx';tb.style.left=x+'px';tb.style.top=y+'px';tb.d_id=id||uid();
+ const tb=document.createElement('div');tb.className='tx';tb.style.left=x+'px';tb.style.top=y+'px';
+ tb.dataset.id=id||uid();
  const h=document.createElement('div');h.className='th';
  const dh=document.createElement('span');dh.className='dh';dh.textContent='⋮⋮';h.appendChild(dh);
  const db=document.createElement('button');db.className='db';db.innerHTML='×';db.onclick=()=>{tb.remove();sv()};h.appendChild(db);tb.appendChild(h);
