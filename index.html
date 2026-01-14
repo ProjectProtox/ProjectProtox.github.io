@@ -81,7 +81,7 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
 
 <!-- WHITEBOARD UI -->
 <div class="tb wb-ui">
-    <button class="btn on" onclick="setT('s',this)" title="Hand (Move Board) [Space]">✋</button>
+    <button id="btn-hand" class="btn on" onclick="setT('s',this)" title="Hand (Move Board) [Space]">✋</button>
     <button class="btn" onclick="setT('n',this)" title="Sticky Note">📝</button>
     <button class="btn" onclick="setT('t',this)" title="Text">🔤</button>
     <div class="sep"></div>
@@ -106,7 +106,7 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
 <canvas id="c" class="wb-ui"></canvas>
 
 <script>
-// PURPOSE: Whiteboard with "Smart Pan" (Space/MiddleClick) and "Local Undo".
+// PURPOSE: Whiteboard with auto-reset to Hand tool after creating Notes/Text.
 // PUBLIC API CONTRACT:
 // - joinRoom(), init(), draw(), apply(), save(), wipe()
 // - undo(): Removes the last element created by THIS session only.
@@ -210,8 +210,16 @@ c.onmousedown = e => {
 
     // Tools
     const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
-    if(t==='n') createDOM('sn', null, wx, wy);
-    else if(t==='t') createDOM('tx', null, wx, wy);
+    if(t==='n') {
+        createDOM('sn', null, wx, wy);
+        // Auto-switch back to Hand
+        setT('s', document.getElementById('btn-hand'));
+    }
+    else if(t==='t') {
+        createDOM('tx', null, wx, wy);
+        // Auto-switch back to Hand
+        setT('s', document.getElementById('btn-hand'));
+    }
     else { dragging=true; dp=[{x:wx,y:wy}]; }
 };
 
