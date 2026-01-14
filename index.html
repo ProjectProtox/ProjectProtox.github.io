@@ -105,6 +105,16 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
 <canvas id="c" class="wb-ui"></canvas>
 
 <script>
+// PURPOSE:
+// Single-file infinite whiteboard application with Supabase realtime synchronization, room management, and sticky notes/text support.
+// PUBLIC API CONTRACT:
+// - joinRoom(): Handles room selection from the homescreen and redirects with the 'raum' parameter.
+// - init(): Initializes Supabase connection, loads/creates the room, and subscribes to realtime updates.
+// - draw(): Renders the canvas elements (shapes, paths) and sticky notes based on current zoom/pan state.
+// - apply(data, force): Updates local state from remote Supabase data; 'force' determines if active inputs are overwritten.
+// - save(): Debounced function that persists local state (canvas, notes, texts) to the Supabase database.
+// - wipe(): Clears all content from the board locally and remotely.
+
 // --- CONFIG ---
 const SB_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co'; 
 const SB_KEY = 'sb_publishable_ntQsU9qIUGNVRNlhY9NErA_POoAFWat';
@@ -417,3 +427,4 @@ function wipe() { if(confirm('Alles löschen?')) { el=[]; document.querySelector
 </script>
 </body>
 </html>
+// END OF FILE
