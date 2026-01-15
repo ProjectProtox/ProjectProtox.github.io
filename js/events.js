@@ -1,5 +1,5 @@
 // PURPOSE:
-// Registers event listeners including robust Image Upload and Paste handling.
+// Registers event listeners including robust Image Upload, Paste handling, and Keyboard shortcuts.
 // PUBLIC API CONTRACT:
 // - initEvents(): Attaches all listeners.
 // - handleImageFile(): Processes raw files into Base64 for the whiteboard.
@@ -47,7 +47,7 @@ function handleImageFile(file) {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_W = 1000; // Increased quality slightly
+            const MAX_W = 1000;
             let w = img.width, h = img.height;
             if(w > MAX_W) { h = h * (MAX_W/w); w = MAX_W; }
             canvas.width = w; canvas.height = h;
@@ -55,13 +55,10 @@ function handleImageFile(file) {
             ctx.drawImage(img, 0, 0, w, h);
             const base64 = canvas.toDataURL('image/jpeg', 0.8);
             
-            // Center placement
-            const cx = (c.width/2 - state.ox)/state.z - (w/2 * 0.5); // Center visually based on zoom
+            const cx = (c.width/2 - state.ox)/state.z - (w/2 * 0.5);
             const cy = (c.height/2 - state.oy)/state.z - (h/2 * 0.5);
             
             createDOM('ib', null, cx, cy, null, base64);
-            
-            // Auto switch to hand so user can move it immediately
             setTool('s', document.getElementById('btn-hand'));
         };
         img.src = evt.target.result;
@@ -85,36 +82,36 @@ export function initEvents() {
 
     // IMAGE UPLOAD (Button)
     document.getElementById('btn-img').onclick = () => {
-        document.getElementById('inp-img').value = ''; // Reset to allow same file selection
+        document.getElementById('inp-img').value = '';
         document.getElementById('inp-img').click();
     };
     document.getElementById('inp-img').onchange = (e) => {
         handleImageFile(e.target.files[0]);
     };
 
-    // PASTE EVENT (Global Ctrl+V)
+    // PASTE EVENT
     window.addEventListener('paste', (e) => {
-        // Access clipboard data
         const clipboardData = e.clipboardData || window.clipboardData;
         if (!clipboardData) return;
-
         const items = clipboardData.items;
-        
         for (let i = 0; i < items.length; i++) {
-            // Check if item is an image
             if (items[i].type.indexOf('image') !== -1) {
                 const blob = items[i].getAsFile();
-                if (blob) {
-                    e.preventDefault(); // Prevent pasting into other fields
-                    handleImageFile(blob);
-                    return; // Stop after first image
-                }
+                if (blob) { e.preventDefault(); handleImageFile(blob); return; }
             }
         }
     });
 
-    // Keyboard
+    // Keyboard Shortcuts
     window.onkeydown = e => {
+        // Undo (Ctrl+Z or Cmd+Z)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            undo();
+            return;
+        }
+
+        // Spacebar Pan
         if(e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
             state.spacePressed = true; c.style.cursor = 'grab';
         }
