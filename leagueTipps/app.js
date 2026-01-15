@@ -4,27 +4,28 @@
 // - roll(): Triggers state change and re-render.
 // - render(): Synchronizes visual state with the HTML document.
 const sentences = [
-  "Plane deine Waves 2–3 Züge im Voraus, nicht nur den aktuellen Trade",
-  "Jede Lane-Action muss einen Jungle-Zeitpunkt respektieren",
-  "Spiele um Win Conditions, nicht um Gleichstand",
-  "Ein schlechter Reset ist oft schlimmer als ein verlorener Trade",
-  "Nutze Slowpushes gezielt, um Map Pressure zu erzeugen",
-  "Vision ohne Druck ist wertlos – Druck ohne Vision ist Risiko",
-  "Tracke den gegnerischen Jungler über Camps, nicht über Hoffnung",
-  "Force nichts vor Power Spikes, abuse alles danach",
-  "Midgame-Tempo entscheidet mehr Spiele als Laning",
-  "Roams müssen Waves rechtfertigen, sonst sind sie Fehler",
-  "Objective-Timer sind wichtiger als KDA",
-  "Spiele Teamfights von der ersten Fähigkeit an, nicht vom Engage",
-  "Peel gewinnt mehr High-Elo-Fights als Hard-Engage",
-  "Jede Information, die du siehst, muss eine Entscheidung erzeugen",
-  "Side-Lane-Druck ist ein Werkzeug, kein Selbstzweck",
-  "Wenn nichts passiert, hast du etwas falsch vorbereitet",
-  "Lerne zu verlieren, ohne das Spieltempo zu verlieren",
-  "Mechanics bringen dich in Master, Entscheidungen halten dich dort",
-  "Spiele nicht den Champion, spiele den Game State",
-  "Konsequenz schlägt Kreativität auf hohem Niveau"
+  "Plane deine Züge basierend auf gegnerischem Mana, nicht auf Wunschdenken",
+  "Jede gespielte Karte muss Tempo, Kartenvorteil oder Position erzeugen",
+  "Halte Interaktion für die entscheidenden Spells, nicht für Bequemlichkeit",
+  "Lies das gegnerische Deck über Lines, nicht über einzelne Karten",
+  "Mulligans entscheiden mehr Matches als Topdecks",
+  "Spiele um Wahrscheinlichkeiten, nicht um Best-Case-Szenarien",
+  "Sequencing ist wichtiger als Kartenauswahl",
+  "Verwandle Life in eine Ressource, nicht in eine Angst",
+  "Zwinge den Gegner, zuerst zu reagieren",
+  "Bluffs sind Werkzeuge, keine Gewohnheit",
+  "Sideboarding ist ein strategischer Reset, kein Austausch einzelner Karten",
+  "Behalte Win Conditions im Blick, auch wenn du hinten liegst",
+  "Mana-Effizienz schlägt rohe Kartenstärke",
+  "Respektiere offene Mana-Züge mehr als bekannte Handkarten",
+  "Erkenne, wann du der Beatdown bist",
+  "Ein verpasster Landdrop ist oft das eigentliche Misplay",
+  "Card Advantage ohne Zeit ist bedeutungslos",
+  "Passe deine Lines an das Matchup an, nicht an dein Ego",
+  "Züge ohne Plan sind verlorene Prozentpunkte",
+  "Konstanz gewinnt Turniere, nicht Highlight-Plays"
 ];
+
 
 const state = {
 text: "",
