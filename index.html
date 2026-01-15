@@ -23,22 +23,26 @@
 
 <!-- WHITEBOARD UI -->
 <div class="tb wb-ui">
-    <button id="btn-hand" class="btn on" data-tool="s" title="Hand (Verschieben) [Leertaste]">✋</button>
-    <button class="btn" data-tool="n" title="Notizzettel">📝</button>
+    <button id="btn-hand" class="btn on" data-tool="s" title="Hand (Move Board) [Space]">✋</button>
+    <button class="btn" data-tool="n" title="Sticky Note">📝</button>
     <button class="btn" data-tool="t" title="Text">🔤</button>
+    <button class="btn" id="btn-img" title="Upload Image">🖼️</button>
     <div class="sep"></div>
-    <button class="btn" data-tool="d" title="Stift">✏️</button>
-    <button class="btn" data-tool="r" title="Rechteck">⬜</button>
-    <button class="btn" data-tool="c" title="Kreis">⭕</button>
+    <button class="btn" data-tool="d" title="Draw">✏️</button>
+    <button class="btn" data-tool="r" title="Rectangle">⬜</button>
+    <button class="btn" data-tool="c" title="Circle">⭕</button>
     <div class="sep"></div>
     <input type="color" id="col" value="#000000">
-    <input type="range" id="sz" min="2" max="20" value="3" title="Größe">
+    <input type="range" id="sz" min="2" max="20" value="3" title="Size">
     <div class="sep"></div>
-    <button class="btn" id="btn-undo" title="Rückgängig (Eigene)">↩️</button>
-    <button class="btn" id="btn-wipe" title="Alles löschen">🗑️</button>
+    <button class="btn" id="btn-undo" title="Undo My Last Action">↩️</button>
+    <button class="btn" id="btn-wipe" title="Delete All">🗑️</button>
 </div>
 
-<div id="status" class="wb-ui"><div class="dot" id="sd"></div><span id="st">Verbinde...</span></div>
+<!-- Hidden File Input -->
+<input type="file" id="inp-img" accept="image/*" style="display:none">
+
+<div id="status" class="wb-ui"><div class="dot" id="sd"></div><span id="st">Connecting...</span></div>
 <div class="zc wb-ui">
     <button class="zb" id="btn-zoom-out">−</button>
     <span class="zl" id="zl">100%</span>
@@ -50,3 +54,4 @@
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
+<!-- END OF FILE -->

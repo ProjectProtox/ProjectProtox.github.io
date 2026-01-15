@@ -1,3 +1,9 @@
+// PURPOSE:
+// Handles all Canvas drawing operations and updates DOM element positioning.
+// PUBLIC API CONTRACT:
+// - draw(): Clears canvas, transforms viewport, renders all shapes and current stroke.
+// - updateDOMPos(): Recalculates screen positions for sticky notes based on zoom/pan.
+
 import { state, elements } from './state.js';
 
 export function draw() {
@@ -45,10 +51,11 @@ export function draw() {
 }
 
 export function updateDOMPos() {
-    document.querySelectorAll('.sn, .tx').forEach(div => {
+    document.querySelectorAll('.sn, .tx, .ib').forEach(div => {
         const wx = parseFloat(div.dataset.wx);
         const wy = parseFloat(div.dataset.wy);
         div.style.left = (wx * state.z + state.ox) + 'px';
         div.style.top = (wy * state.z + state.oy) + 'px';
     });
 }
+// END OF FILE

@@ -1,3 +1,8 @@
+// PURPOSE:
+// Registers event listeners including Image Upload handling.
+// PUBLIC API CONTRACT:
+// - initEvents(): Attaches all listeners.
+
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { save } from './network.js';
@@ -40,10 +45,43 @@ export function initEvents() {
     });
     document.getElementById('btn-undo').onclick = undo;
     document.getElementById('btn-wipe').onclick = () => { 
-        if(confirm('Alles löschen?')) { state.el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } 
+        if(confirm('Alles löschen?')) { state.el=[]; document.querySelectorAll('.sn,.tx,.ib').forEach(e=>e.remove()); draw(); save(); } 
     };
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
+
+    // IMAGE UPLOAD
+    document.getElementById('btn-img').onclick = () => {
+        document.getElementById('inp-img').click();
+    };
+    document.getElementById('inp-img').onchange = (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const img = new Image();
+            img.onload = () => {
+                // Compress/Resize logic
+                const canvas = document.createElement('canvas');
+                const MAX_W = 800;
+                let w = img.width, h = img.height;
+                if(w > MAX_W) { h = h * (MAX_W/w); w = MAX_W; }
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // Place in center of screen
+                const cx = (c.width/2 - state.ox)/state.z - 100;
+                const cy = (c.height/2 - state.oy)/state.z - 100;
+                
+                createDOM('ib', null, cx, cy, null, base64);
+                e.target.value = ''; // Reset input
+            };
+            img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
 
     // Keyboard
     window.onkeydown = e => {
@@ -64,7 +102,6 @@ export function initEvents() {
 
         const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
         
-        // AUTO-HAND SWITCH LOGIC
         if(state.t==='n') { 
             createDOM('sn', null, wx, wy); 
             setTool('s', document.getElementById('btn-hand')); 
@@ -108,3 +145,4 @@ export function initEvents() {
     c.onwheel = e => { e.preventDefault(); zoom(e.deltaY<0 ? 1 : -1); };
     window.onresize = () => { c.width=innerWidth; c.height=innerHeight; draw(); };
 }
+// END OF FILE

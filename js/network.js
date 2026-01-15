@@ -1,3 +1,10 @@
+// PURPOSE:
+// Handles Supabase interactions. Adds image support to save/apply.
+// PUBLIC API CONTRACT:
+// - initNetwork(): initializes client and subscriptions.
+// - save(): Scrapes Canvas, Notes, Texts, AND Images to save.
+// - apply(): Reconstructs DOM from remote data.
+
 import { CONFIG } from './config.js';
 import { state, elements } from './state.js';
 import { draw } from './render.js';
@@ -43,19 +50,28 @@ export function save() {
     clearTimeout(state.saveTimer);
     
     state.saveTimer = setTimeout(async () => {
+        // Collect Notes
         const notes = Array.from(document.querySelectorAll('.sn')).map(n => ({
             id: n.dataset.id, x: parseFloat(n.dataset.wx), y: parseFloat(n.dataset.wy), 
             w: n.style.width, h: n.style.height,
             bg: n.style.background, txt: n.querySelector('textarea').value
         }));
+        // Collect Texts
         const texts = Array.from(document.querySelectorAll('.tx')).map(t => ({
             id: t.dataset.id, x: parseFloat(t.dataset.wx), y: parseFloat(t.dataset.wy), 
             w: t.style.width, h: t.style.height,
             txt: t.querySelector('input').value
         }));
+        // Collect Images
+        const images = Array.from(document.querySelectorAll('.ib')).map(n => ({
+            id: n.dataset.id, x: parseFloat(n.dataset.wx), y: parseFloat(n.dataset.wy),
+            w: n.style.width, h: n.style.height,
+            src: n.querySelector('img').src
+        }));
         
         const elWithOwners = state.el.map(e => ({...e, owner: e.owner || 'anon'}));
-        await sb.from('board').update({ content: {el: elWithOwners, notes, texts} }).eq('id', state.ROOM);
+        
+        await sb.from('board').update({ content: {el: elWithOwners, notes, texts, images} }).eq('id', state.ROOM);
         elements.sd.className='dot ok';
     }, 500);
 }
@@ -69,19 +85,31 @@ export function apply(d, force) {
         (list||[]).forEach(n => {
             keep.add(n.id);
             let div = document.querySelector(`.${type}[data-id="${n.id}"]`);
-            if(!div) div = createDOM(type, n.id, n.x, n.y, n.bg, true);
+            // Pass n.src or n.txt as content. For notes/text it's null here (handled via input val)
+            const content = type === 'ib' ? n.src : null;
+            
+            if(!div) div = createDOM(type, n.id, n.x, n.y, n.bg, content, true);
+            
             div.dataset.wx = n.x; div.dataset.wy = n.y;
             if(n.w) div.style.width = n.w;
             if(n.h) div.style.height = n.h;
-            if(type==='sn') div.style.background = n.bg;
-            const input = div.querySelector(type==='sn'?'textarea':'input');
-            if(force || active!==input) input.value = n.txt;
+            
+            if(type==='sn') {
+                div.style.background = n.bg;
+                const input = div.querySelector('textarea');
+                if(force || active!==input) input.value = n.txt;
+            } else if(type==='tx') {
+                const input = div.querySelector('input');
+                if(force || active!==input) input.value = n.txt;
+            }
         });
     };
 
     syncDOM(d.notes, 'sn');
     syncDOM(d.texts, 'tx');
+    syncDOM(d.images, 'ib');
     
-    document.querySelectorAll('.sn,.tx').forEach(e => { if(!keep.has(e.dataset.id)) e.remove(); });
+    document.querySelectorAll('.sn,.tx,.ib').forEach(e => { if(!keep.has(e.dataset.id)) e.remove(); });
     draw();
 }
+// END OF FILE
