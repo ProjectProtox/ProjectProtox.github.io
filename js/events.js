@@ -102,23 +102,32 @@ export function initEvents() {
         }
     });
 
-    // Keyboard Shortcuts
-    window.onkeydown = e => {
-        // Undo (Ctrl+Z or Cmd+Z)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-            e.preventDefault();
-            undo();
+    // Keyboard Shortcuts (Using addEventListener for better stability)
+    window.addEventListener('keydown', e => {
+        // UNDO: Ctrl+Z or Cmd+Z
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            // If typing in a text field, let browser handle text-undo.
+            // If NOT typing, trigger board object undo.
+            if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                undo();
+            }
             return;
         }
 
-        // Spacebar Pan
-        if(e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-            state.spacePressed = true; c.style.cursor = 'grab';
+        // PAN: Spacebar
+        if (e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+            state.spacePressed = true; 
+            c.style.cursor = 'grab';
         }
-    };
-    window.onkeyup = e => {
-        if(e.code === 'Space') { state.spacePressed = false; c.style.cursor = state.t==='s'?'grab':'default'; }
-    };
+    });
+
+    window.addEventListener('keyup', e => {
+        if (e.code === 'Space') { 
+            state.spacePressed = false; 
+            c.style.cursor = state.t==='s'?'grab':'default'; 
+        }
+    });
 
     // Canvas Mouse
     c.onmousedown = e => {
