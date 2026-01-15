@@ -1,9 +1,3 @@
-// PURPOSE:
-// Registers all event listeners (Mouse, Keyboard, Buttons) and handles tool switching.
-// PUBLIC API CONTRACT:
-// - initEvents(): Attaches all listeners to the window and canvas.
-// - setTool(mode, btn): Switches the active tool.
-
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { save } from './network.js';
@@ -46,7 +40,7 @@ export function initEvents() {
     });
     document.getElementById('btn-undo').onclick = undo;
     document.getElementById('btn-wipe').onclick = () => { 
-        if(confirm('Delete All?')) { state.el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } 
+        if(confirm('Alles löschen?')) { state.el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } 
     };
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
@@ -69,8 +63,16 @@ export function initEvents() {
         }
 
         const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
-        if(state.t==='n') { createDOM('sn', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
-        else if(state.t==='t') { createDOM('tx', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
+        
+        // AUTO-HAND SWITCH LOGIC
+        if(state.t==='n') { 
+            createDOM('sn', null, wx, wy); 
+            setTool('s', document.getElementById('btn-hand')); 
+        }
+        else if(state.t==='t') { 
+            createDOM('tx', null, wx, wy); 
+            setTool('s', document.getElementById('btn-hand')); 
+        }
         else { state.dragging=true; state.dp=[{x:wx,y:wy}]; }
     };
 
@@ -90,7 +92,7 @@ export function initEvents() {
             const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
             const start=state.dp[0];
             const lw = parseInt(elements.sz.value);
-            const id = uid();
+            const id = Math.random().toString(36).substr(2, 9);
             let newEl = null;
 
             if(state.t==='d' && state.dp.length>1) newEl = {t:'p', pts:state.dp, col:elements.col.value, lw, id, owner:state.MY_ID};
@@ -106,4 +108,3 @@ export function initEvents() {
     c.onwheel = e => { e.preventDefault(); zoom(e.deltaY<0 ? 1 : -1); };
     window.onresize = () => { c.width=innerWidth; c.height=innerHeight; draw(); };
 }
-// END OF FILE

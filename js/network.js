@@ -1,8 +1,3 @@
-// PURPOSE:
-// Handles Supabase interactions. Initializes safely.
-// PUBLIC API CONTRACT:
-// - initNetwork(): initializes client and subscriptions.
-
 import { CONFIG } from './config.js';
 import { state, elements } from './state.js';
 import { draw } from './render.js';
@@ -11,17 +6,15 @@ import { createDOM } from './dom.js';
 let sb = null;
 
 export async function initNetwork() {
-    // Safety check: is Supabase library loaded?
     if (typeof supabase === 'undefined') {
-        console.error("Supabase library not loaded!");
-        alert("Fehler: Verbindungsserver nicht erreichbar. Bitte Seite neu laden.");
+        alert("Supabase Fehler: Bitte Seite neu laden.");
         return;
     }
 
     const { createClient } = supabase;
     sb = createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
 
-    elements.sd.className='dot load'; elements.st.innerText='Loading ' + state.ROOM;
+    elements.sd.className='dot load'; elements.st.innerText='Lade ' + state.ROOM;
     
     try {
         let { data, error } = await sb.from('board').select('content').eq('id', state.ROOM).single();
@@ -39,7 +32,7 @@ export async function initNetwork() {
             (p) => { if(p.new.content) { state.remote=true; apply(p.new.content, false); state.remote=false; } }
         ).subscribe();
     } catch (e) {
-        elements.sd.className='dot err'; elements.st.innerText='Error';
+        elements.sd.className='dot err'; elements.st.innerText='Verbindungsfehler';
         console.error(e);
     }
 }
@@ -92,4 +85,3 @@ export function apply(d, force) {
     document.querySelectorAll('.sn,.tx').forEach(e => { if(!keep.has(e.dataset.id)) e.remove(); });
     draw();
 }
-// END OF FILE

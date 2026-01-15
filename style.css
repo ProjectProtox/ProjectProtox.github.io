@@ -1,13 +1,8 @@
-/* PURPOSE:
-// Global styling. Improves Homescreen look and ensures correct layering.
-// PUBLIC API CONTRACT:
-// - #home-screen covers everything by default (z-index 9999).
-// - .wb-ui classes are hidden by default via CSS to prevent flickering. */
-
+/* GLOBAL & RESET */
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
 
-/* --- HOMESCREEN --- */
+/* HOMESCREEN */
 #home-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -16,64 +11,77 @@ body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetic
 }
 .card {
     background: white; padding: 40px; border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
-    width: 90%; max-width: 420px;
-    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 420px;
 }
-.card h1 { margin-bottom: 12px; font-size: 28px; color: #2c3e50; letter-spacing: -0.5px; }
+.card h1 { margin-bottom: 12px; font-size: 28px; color: #2c3e50; }
 .card p { margin-bottom: 24px; color: #7f8c8d; font-size: 15px; }
-
 .input-group { display: flex; flex-direction: column; gap: 12px; }
-
 .card input {
-    width: 100%; padding: 14px; 
-    border: 2px solid #e0e0e0; border-radius: 8px; 
-    font-size: 16px; outline: none; transition: 0.2s;
-    background: #fafafa;
+    width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; 
+    font-size: 16px; outline: none; background: #fafafa;
 }
-.card input:focus { border-color: #4a90e2; background: #fff; box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1); }
-
+.card input:focus { border-color: #4a90e2; background: #fff; }
 .card button {
-    width: 100%; padding: 14px; 
-    background: #4a90e2; color: white;
-    border: none; border-radius: 8px; 
-    font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s;
-    box-shadow: 0 4px 6px rgba(74, 144, 226, 0.2);
+    width: 100%; padding: 14px; background: #4a90e2; color: white;
+    border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
 }
-.card button:hover { background: #357abd; transform: translateY(-1px); }
-.card button:active { transform: translateY(1px); }
+.card button:hover { background: #357abd; }
 
-/* --- UI ELEMENTS --- */
-/* Important: Hidden by default, toggled by JS */
+/* UI ELEMENTS (Hidden by default) */
 .wb-ui { display: none; }
 
+/* CANVAS & TOOLBAR */
 #c{position:absolute;top:0;left:0;z-index:0;touch-action:none}
 .tb{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:8px;z-index:1000}
 .btn{width:36px;height:36px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:0.1s}
 .btn:hover{background:#f0f7ff;border-color:#4a90e2}
 .btn.on{background:#4a90e2;color:#fff;border-color:#4a90e2}
 .sep{width:1px;height:24px;background:#ddd;align-self:center}
-
 input[type=color]{width:30px;height:30px;border:none;cursor:pointer;background:none}
 input[type=range]{width:80px;cursor:pointer}
 
-/* --- NOTES & TEXT --- */
-.sn, .tx{position:absolute;will-change:transform, left, top;z-index:10}
-.sn{width:200px;background:#feff9c;box-shadow:0 4px 10px rgba(0,0,0,0.2);border-radius:4px;display:flex;flex-direction:column; resize:both; overflow:hidden; min-width: 100px; min-height: 100px;}
-.sh{height:24px;background:rgba(0,0,0,0.08);cursor:grab;display:flex;justify-content:flex-end;padding:2px;border-radius:4px 4px 0 0}
-.sh:active{cursor:grabbing}
-.close{background:#ff5555;color:white;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-weight:bold;line-height:1}
-textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none;font-family:inherit;min-height:120px; width: 100%; height: 100%;}
+/* STICKY NOTES & TEXT (Wichtig für Resize!) */
+.sn, .tx {
+    position: absolute; will-change: transform, left, top; z-index: 10;
+    /* Ermöglicht das Ziehen an den Ecken */
+    resize: both; overflow: hidden; 
+    min-width: 100px; min-height: 80px;
+    display: flex; flex-direction: column;
+}
+.sn {
+    width: 200px; height: 180px;
+    background: #feff9c; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2); border-radius: 4px;
+    /* Padding unten rechts, damit man den Resize-Griff greifen kann */
+    padding-bottom: 12px;
+}
+.tx {
+    background: rgba(255,255,255,0.9); border: 1px solid #333; padding: 4px; border-radius: 4px;
+    min-width: 150px; min-height: 40px; padding-bottom: 10px;
+}
 
-.tx{background:rgba(255,255,255,0.85);border:1px solid #333;padding:4px;border-radius:4px; resize:both; overflow:hidden; min-width: 50px; min-height: 30px;}
-.th{height:16px;background:rgba(0,0,0,0.1);cursor:grab;margin-bottom:2px;border-radius:2px}
-.tx input{border:none;background:none;outline:none;font-size:16px;min-width:150px;font-family:inherit; width: 100%;}
+/* Header (Drag Handle) */
+.sh, .th { cursor: grab; display: flex; justify-content: flex-end; padding: 2px; flex-shrink: 0; }
+.sh { height: 24px; background: rgba(0,0,0,0.08); border-radius: 4px 4px 0 0; }
+.th { height: 16px; background: rgba(0,0,0,0.1); margin-bottom: 2px; border-radius: 2px; }
+.sh:active, .th:active { cursor: grabbing; }
 
-/* --- OVERLAYS --- */
+/* Close Button */
+.close { background: #ff5555; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-weight: bold; line-height: 1; }
+
+/* Inputs */
+textarea {
+    flex: 1; border: none; background: none; padding: 8px; resize: none; outline: none; font-family: inherit;
+    width: 100%; height: 100%; display: block;
+}
+.tx input {
+    border: none; background: none; outline: none; font-size: 16px; width: 100%; font-family: inherit;
+}
+
+/* OVERLAYS */
 #status{position:fixed;bottom:10px;left:10px;background:white;padding:5px 10px;border-radius:20px;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px;z-index:1000}
 .dot{width:8px;height:8px;border-radius:50%;background:#ccc}
 .dot.ok{background:#2ecc71} .dot.load{background:#f1c40f} .dot.err{background:#e74c3c}
 .zc{position:fixed;bottom:15px;right:15px;background:#fff;padding:5px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;gap:4px;z-index:1000}
 .zb{padding:5px 10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-weight:bold}
 .zl{font-size:12px;min-width:45px;text-align:center;line-height:28px;font-weight:600}
-/* END OF FILE */

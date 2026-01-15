@@ -1,9 +1,3 @@
-// PURPOSE:
-// Creates and manages HTML DOM elements (Sticky Notes, Text Boxes).
-// PUBLIC API CONTRACT:
-// - createDOM(type, id, wx, wy, bg, skipSave): Creates a new DOM element on the board.
-// - uid(): Generates a random ID.
-
 import { state } from './state.js';
 import { save } from './network.js';
 import { updateDOMPos } from './render.js';
@@ -20,17 +14,14 @@ export function createDOM(type, id, wx, wy, bg, skipSave = false) {
     div.dataset.wx = wx; div.dataset.wy = wy;
     if(bg) div.style.background = bg;
     
-    // Save on resize end (mouseup on container)
-    div.onmouseup = (e) => {
-        // Prevent triggering if clicking child elements, but resize usually targets container edge
-        save();
-    };
+    // Save on resize end
+    div.onmouseup = (e) => save();
     
     const h = document.createElement('div'); h.className = type==='sn'?'sh':'th';
     const b = document.createElement('button'); b.className='close'; b.innerHTML='×';
     b.onclick = () => { div.remove(); save(); };
     
-    // Drag Logic
+    // Move Logic
     h.onmousedown = e => {
         e.stopPropagation(); if(e.target===b) return; e.preventDefault();
         let lx=e.clientX, ly=e.clientY;
@@ -59,4 +50,3 @@ export function createDOM(type, id, wx, wy, bg, skipSave = false) {
     }
     return div;
 }
-// END OF FILE
