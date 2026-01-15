@@ -4,14 +4,26 @@
 // - roll(): Triggers state change and re-render.
 // - render(): Synchronizes visual state with the HTML document.
 const sentences = [
-"Behalte die Karte im Auge",
-"Warding gewinnt Spiele",
-"Kommunikation ist der Schlüssel",
-"Fokus auf die Objectives",
-"Respektiere den Gank",
-"Positionierung entscheidet Fights",
-"Kauf dir ein Kontroll-Auge",
-"Bleib ruhig und konzentriert"
+  "Plane deine Waves 2–3 Züge im Voraus, nicht nur den aktuellen Trade",
+  "Jede Lane-Action muss einen Jungle-Zeitpunkt respektieren",
+  "Spiele um Win Conditions, nicht um Gleichstand",
+  "Ein schlechter Reset ist oft schlimmer als ein verlorener Trade",
+  "Nutze Slowpushes gezielt, um Map Pressure zu erzeugen",
+  "Vision ohne Druck ist wertlos – Druck ohne Vision ist Risiko",
+  "Tracke den gegnerischen Jungler über Camps, nicht über Hoffnung",
+  "Force nichts vor Power Spikes, abuse alles danach",
+  "Midgame-Tempo entscheidet mehr Spiele als Laning",
+  "Roams müssen Waves rechtfertigen, sonst sind sie Fehler",
+  "Objective-Timer sind wichtiger als KDA",
+  "Spiele Teamfights von der ersten Fähigkeit an, nicht vom Engage",
+  "Peel gewinnt mehr High-Elo-Fights als Hard-Engage",
+  "Jede Information, die du siehst, muss eine Entscheidung erzeugen",
+  "Side-Lane-Druck ist ein Werkzeug, kein Selbstzweck",
+  "Wenn nichts passiert, hast du etwas falsch vorbereitet",
+  "Lerne zu verlieren, ohne das Spieltempo zu verlieren",
+  "Mechanics bringen dich in Master, Entscheidungen halten dich dort",
+  "Spiele nicht den Champion, spiele den Game State",
+  "Konsequenz schlägt Kreativität auf hohem Niveau"
 ];
 
 const state = {
