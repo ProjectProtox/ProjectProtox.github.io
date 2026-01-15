@@ -1,18 +1,21 @@
 // PURPOSE:
-// Event wiring for Tools, Undo (Ctrl+Z), Images (Paste/Upload) and PDF Export.
+// Registers event listeners. Implements Logic for Tools, Undo, Images, PDF Export, and ERASER.
 // PUBLIC API CONTRACT:
-// - initEvents(): Setup listeners.
+// - initEvents(): Attaches all listeners.
 
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { save } from './network.js';
 import { createDOM, uid } from './dom.js';
-import { exportToPDF } from './export.js'; // IMPORT ADDED
+import { exportToPDF } from './export.js';
 
 export function setTool(mode, btn) {
     state.t = mode;
     document.querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
     if(btn) btn.classList.add('on');
+    
+    // Set Cursor for Eraser
+    elements.c.style.cursor = mode === 'e' ? 'cell' : (mode === 's' ? 'grab' : 'crosshair');
 }
 
 function undo() {
@@ -65,10 +68,41 @@ function handleImageFile(file) {
     reader.readAsDataURL(file);
 }
 
+// --- ERASER LOGIC ---
+function tryErase(mx, my) {
+    let changed = false;
+    // Iterate reverse to delete top elements first
+    for (let i = state.el.length - 1; i >= 0; i--) {
+        const e = state.el[i];
+        let hit = false;
+        
+        if (e.t === 'r') {
+            hit = mx >= e.x && mx <= e.x + e.w && my >= e.y && my <= e.y + e.h;
+        } else if (e.t === 'c') {
+            const cx = e.x + e.w/2, cy = e.y + e.h/2;
+            hit = Math.sqrt((mx-cx)**2 + (my-cy)**2) <= e.w/2;
+        } else if (e.t === 'p') {
+            // Check near any point in path
+            hit = e.pts.some(p => Math.abs(p.x - mx) < 10 && Math.abs(p.y - my) < 10);
+        }
+
+        if (hit) {
+            state.el.splice(i, 1);
+            changed = true;
+            // Break after one deletion per click/move frame for precision
+            break; 
+        }
+    }
+    if (changed) {
+        draw();
+        save();
+    }
+}
+
 export function initEvents() {
     const { c } = elements;
 
-    // Toolbar Buttons
+    // Buttons
     document.querySelectorAll('[data-tool]').forEach(btn => {
         btn.onclick = () => setTool(btn.dataset.tool, btn);
     });
@@ -79,10 +113,8 @@ export function initEvents() {
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
     
-    // EXPORT BUTTON LINKED HERE
     document.getElementById('btn-export').onclick = exportToPDF;
 
-    // IMAGE UPLOAD
     document.getElementById('btn-img').onclick = () => {
         document.getElementById('inp-img').value = '';
         document.getElementById('inp-img').click();
@@ -91,7 +123,6 @@ export function initEvents() {
         handleImageFile(e.target.files[0]);
     };
 
-    // PASTE IMAGE
     window.addEventListener('paste', (e) => {
         const clipboardData = e.clipboardData || window.clipboardData;
         if (!clipboardData) return;
@@ -104,16 +135,13 @@ export function initEvents() {
         }
     });
 
-    // SHORTCUTS (Undo & Pan)
     window.addEventListener('keydown', e => {
-        // Ctrl+Z
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
             if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault(); undo();
             }
             return;
         }
-        // Spacebar
         if (e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
             state.spacePressed = true; c.style.cursor = 'grab';
         }
@@ -129,23 +157,40 @@ export function initEvents() {
     // Mouse Interaction
     c.onmousedown = e => {
         state.sx=e.clientX; state.sy=e.clientY;
+        
+        // Panning check
         if (e.button === 1 || state.spacePressed || state.t === 's') {
             state.panning = true; c.style.cursor = 'grabbing'; e.preventDefault(); return;
         }
 
         const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
         
+        if (state.t === 'e') {
+            // ERASER MODE: Click
+            state.dragging = true; // Use dragging flag to allow drag-erasing
+            tryErase(wx, wy);
+            return;
+        }
+
         if(state.t==='n') { createDOM('sn', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
         else if(state.t==='t') { createDOM('tx', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
         else { state.dragging=true; state.dp=[{x:wx,y:wy}]; }
     };
 
     c.onmousemove = e => {
+        const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
+
         if(state.panning) { 
             state.ox+=e.clientX-state.sx; state.oy+=e.clientY-state.sy; state.sx=e.clientX; state.sy=e.clientY; draw(); 
-        } else if(state.dragging) {
-            const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
-            state.dp.push({x:wx,y:wy}); draw();
+        } 
+        else if(state.dragging) {
+            if (state.t === 'e') {
+                // ERASER MODE: Drag
+                tryErase(wx, wy);
+            } else {
+                // DRAWING MODE
+                state.dp.push({x:wx,y:wy}); draw();
+            }
         }
     };
 
@@ -153,6 +198,9 @@ export function initEvents() {
         if(state.panning) { state.panning=false; c.style.cursor = (state.spacePressed || state.t==='s') ? 'grab' : 'default'; }
         else if(state.dragging) {
             state.dragging=false;
+            
+            if (state.t === 'e') return; // Stop eraser
+
             const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
             const start=state.dp[0];
             const lw = parseInt(elements.sz.value);
@@ -160,7 +208,7 @@ export function initEvents() {
             let newEl = null;
 
             if(state.t==='d' && state.dp.length>1) newEl = {t:'p', pts:state.dp, col:elements.col.value, lw, id, owner:state.MY_ID};
-            else if(state.t==='r'||state.t==='c') {
+            else if((state.t==='r'||state.t==='c') && start) {
                 const w=Math.abs(wx-start.x), h=Math.abs(wy-start.y);
                 if(w>2) newEl = {t:state.t, x:Math.min(wx,start.x), y:Math.min(wy,start.y), w, h, col:elements.col.value, lw, id, owner:state.MY_ID};
             }
