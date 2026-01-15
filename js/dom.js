@@ -48,9 +48,9 @@ export function createDOM(type, id, wx, wy, bg, content = null, skipSave = false
         const img = document.createElement('img');
         img.src = content || ''; 
         div.appendChild(img);
-        // Image Header needs to be appended to div, but positioned absolute (via CSS)
-        h.appendChild(b);
+        // Header on top of image
         div.appendChild(h);
+        h.appendChild(b);
     } else {
         // TEXT/NOTE LOGIC
         div.appendChild(h);

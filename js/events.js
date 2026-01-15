@@ -1,5 +1,5 @@
 // PURPOSE:
-// Registers event listeners including Image Upload handling.
+// Registers event listeners including Image Upload and Paste handling.
 // PUBLIC API CONTRACT:
 // - initEvents(): Attaches all listeners.
 
@@ -36,6 +36,32 @@ function zoom(dir) {
     draw();
 }
 
+function handleImageFile(file) {
+    const { c } = elements;
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_W = 800;
+            let w = img.width, h = img.height;
+            if(w > MAX_W) { h = h * (MAX_W/w); w = MAX_W; }
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            const cx = (c.width/2 - state.ox)/state.z - 100;
+            const cy = (c.height/2 - state.oy)/state.z - 100;
+            
+            createDOM('ib', null, cx, cy, null, base64);
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 export function initEvents() {
     const { c } = elements;
 
@@ -50,38 +76,26 @@ export function initEvents() {
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
 
-    // IMAGE UPLOAD
+    // IMAGE UPLOAD (Button)
     document.getElementById('btn-img').onclick = () => {
         document.getElementById('inp-img').click();
     };
     document.getElementById('inp-img').onchange = (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const img = new Image();
-            img.onload = () => {
-                // Compress/Resize logic
-                const canvas = document.createElement('canvas');
-                const MAX_W = 800;
-                let w = img.width, h = img.height;
-                if(w > MAX_W) { h = h * (MAX_W/w); w = MAX_W; }
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                const base64 = canvas.toDataURL('image/jpeg', 0.7);
-                
-                // Place in center of screen
-                const cx = (c.width/2 - state.ox)/state.z - 100;
-                const cy = (c.height/2 - state.oy)/state.z - 100;
-                
-                createDOM('ib', null, cx, cy, null, base64);
-                e.target.value = ''; // Reset input
-            };
-            img.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
+        handleImageFile(e.target.files[0]);
+        e.target.value = ''; 
     };
+
+    // PASTE EVENT (Ctrl+V)
+    window.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+            const item = items[index];
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const blob = item.getAsFile();
+                handleImageFile(blob);
+            }
+        }
+    });
 
     // Keyboard
     window.onkeydown = e => {

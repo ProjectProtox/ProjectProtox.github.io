@@ -1,8 +1,8 @@
 /* PURPOSE:
-// Global styling. Added styles for .ib (Image Box) to allow resizing and positioning.
+// Global styling. Updated Image Header (.ih) to be full width for easy dragging.
 // PUBLIC API CONTRACT:
 // - .ib class handles image container styling.
-// - .ib img ensures images fit within the resizable container. */
+// - .ih spans the top of the image container to allow dragging. */
 
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
@@ -80,8 +80,8 @@ input[type=range]{width:80px;cursor:pointer}
 /* Image Box */
 .ib {
     min-width: 50px; min-height: 50px;
-    border: 1px dashed rgba(0,0,0,0.1); /* Visual aid */
-    padding-bottom: 5px; /* For resize handle */
+    border: 1px dashed rgba(0,0,0,0.1); 
+    padding-bottom: 5px; 
 }
 .ib img {
     width: 100%; height: 100%; object-fit: contain; pointer-events: none;
@@ -91,13 +91,19 @@ input[type=range]{width:80px;cursor:pointer}
 .sh, .th, .ih { cursor: grab; display: flex; justify-content: flex-end; padding: 2px; flex-shrink: 0; z-index: 20; }
 .sh { height: 24px; background: rgba(0,0,0,0.08); border-radius: 4px 4px 0 0; }
 .th { height: 16px; background: rgba(0,0,0,0.1); margin-bottom: 2px; border-radius: 2px; }
-.ih { position: absolute; top: 0; right: 0; width: 30px; height: 30px; background: transparent; } 
-/* Image header is transparent/small overlay to not block image */
+
+/* Modified Image Header: Full width top bar for easier dragging */
+.ih { 
+    position: absolute; top: 0; left: 0; right: 0; 
+    height: 24px; background: rgba(0,0,0,0.2); 
+    opacity: 0; transition: opacity 0.2s;
+}
+.ib:hover .ih { opacity: 1; }
 
 .sh:active, .th:active, .ih:active { cursor: grabbing; }
 
 /* Close Button */
-.close { background: #ff5555; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-weight: bold; line-height: 1; opacity: 0.7; }
+.close { background: #ff5555; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-weight: bold; line-height: 1; opacity: 0.8; }
 .close:hover { opacity: 1; }
 
 /* Inputs */
