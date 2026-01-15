@@ -1,7 +1,8 @@
 // PURPOSE:
-// Registers event listeners including global PASTE support for images.
+// Registers event listeners including robust Image Upload and Paste handling.
 // PUBLIC API CONTRACT:
 // - initEvents(): Attaches all listeners.
+// - handleImageFile(): Processes raw files into Base64 for the whiteboard.
 
 import { state, elements } from './state.js';
 import { draw } from './render.js';
@@ -39,27 +40,28 @@ function zoom(dir) {
 // Reusable Image Processor
 function handleImageFile(file) {
     const { c } = elements;
-    if(!file) return;
+    if(!file || !file.type.startsWith('image/')) return;
+    
     const reader = new FileReader();
     reader.onload = (evt) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_W = 800;
+            const MAX_W = 1000; // Increased quality slightly
             let w = img.width, h = img.height;
             if(w > MAX_W) { h = h * (MAX_W/w); w = MAX_W; }
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
             
             // Center placement
-            const cx = (c.width/2 - state.ox)/state.z - 100;
-            const cy = (c.height/2 - state.oy)/state.z - 100;
+            const cx = (c.width/2 - state.ox)/state.z - (w/2 * 0.5); // Center visually based on zoom
+            const cy = (c.height/2 - state.oy)/state.z - (h/2 * 0.5);
             
             createDOM('ib', null, cx, cy, null, base64);
             
-            // Auto switch to hand
+            // Auto switch to hand so user can move it immediately
             setTool('s', document.getElementById('btn-hand'));
         };
         img.src = evt.target.result;
@@ -83,22 +85,30 @@ export function initEvents() {
 
     // IMAGE UPLOAD (Button)
     document.getElementById('btn-img').onclick = () => {
+        document.getElementById('inp-img').value = ''; // Reset to allow same file selection
         document.getElementById('inp-img').click();
     };
     document.getElementById('inp-img').onchange = (e) => {
         handleImageFile(e.target.files[0]);
-        e.target.value = ''; 
     };
 
     // PASTE EVENT (Global Ctrl+V)
     window.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        // Access clipboard data
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const items = clipboardData.items;
+        
         for (let i = 0; i < items.length; i++) {
+            // Check if item is an image
             if (items[i].type.indexOf('image') !== -1) {
                 const blob = items[i].getAsFile();
-                handleImageFile(blob);
-                e.preventDefault(); // Stop pasting into textarea if focused
-                return; // Stop after first image
+                if (blob) {
+                    e.preventDefault(); // Prevent pasting into other fields
+                    handleImageFile(blob);
+                    return; // Stop after first image
+                }
             }
         }
     });
