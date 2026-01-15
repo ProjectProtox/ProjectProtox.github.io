@@ -1,13 +1,13 @@
 // PURPOSE:
-// Registers event listeners including Image Upload, Paste handling, Shortcuts AND PDF Export.
+// Event wiring for Tools, Undo (Ctrl+Z), Images (Paste/Upload) and PDF Export.
 // PUBLIC API CONTRACT:
-// - initEvents(): Attaches all listeners.
+// - initEvents(): Setup listeners.
 
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { save } from './network.js';
 import { createDOM, uid } from './dom.js';
-import { exportToPDF } from './export.js';
+import { exportToPDF } from './export.js'; // IMPORT ADDED
 
 export function setTool(mode, btn) {
     state.t = mode;
@@ -68,7 +68,7 @@ function handleImageFile(file) {
 export function initEvents() {
     const { c } = elements;
 
-    // Buttons
+    // Toolbar Buttons
     document.querySelectorAll('[data-tool]').forEach(btn => {
         btn.onclick = () => setTool(btn.dataset.tool, btn);
     });
@@ -79,7 +79,7 @@ export function initEvents() {
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
     
-    // PDF Export
+    // EXPORT BUTTON LINKED HERE
     document.getElementById('btn-export').onclick = exportToPDF;
 
     // IMAGE UPLOAD
@@ -91,7 +91,7 @@ export function initEvents() {
         handleImageFile(e.target.files[0]);
     };
 
-    // PASTE
+    // PASTE IMAGE
     window.addEventListener('paste', (e) => {
         const clipboardData = e.clipboardData || window.clipboardData;
         if (!clipboardData) return;
@@ -104,14 +104,16 @@ export function initEvents() {
         }
     });
 
-    // Shortcuts
+    // SHORTCUTS (Undo & Pan)
     window.addEventListener('keydown', e => {
+        // Ctrl+Z
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
             if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault(); undo();
             }
             return;
         }
+        // Spacebar
         if (e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
             state.spacePressed = true; c.style.cursor = 'grab';
         }
