@@ -1,8 +1,7 @@
 /* PURPOSE:
-// Global styling. Updated Image Header (.ih) to be full width for easy dragging.
-// PUBLIC API CONTRACT:
-// - .ib class handles image container styling.
-// - .ih spans the top of the image container to allow dragging. */
+// Global styling. 
+// FIXED: .ih (Image Header) now covers almost the entire image for easier dragging.
+// FIXED: .ib has padding at the bottom to ensure the resize-handle is accessible. */
 
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
@@ -68,42 +67,65 @@ input[type=range]{width:80px;cursor:pointer}
     width: 200px; height: 180px; min-width: 100px; min-height: 80px;
     background: #feff9c; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.2); border-radius: 4px;
-    padding-bottom: 12px;
+    padding-bottom: 15px; /* Space for resize handle */
 }
 
 /* Text Box */
 .tx {
     background: rgba(255,255,255,0.9); border: 1px solid #333; padding: 4px; border-radius: 4px;
-    min-width: 150px; min-height: 40px; padding-bottom: 10px;
+    min-width: 150px; min-height: 40px; padding-bottom: 12px;
 }
 
 /* Image Box */
 .ib {
-    min-width: 50px; min-height: 50px;
-    border: 1px dashed rgba(0,0,0,0.1); 
-    padding-bottom: 5px; 
+    min-width: 100px; min-height: 100px;
+    /* Transparent border to show selection/bounds */
+    border: 1px solid rgba(0,0,0,0.05);
+    /* Vital: Padding at bottom allows accessing the resize handle without hitting the drag-overlay */
+    padding-bottom: 20px; 
 }
 .ib img {
-    width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+    width: 100%; height: 100%; object-fit: contain; pointer-events: none; display: block;
 }
 
 /* Header (Drag Handle) */
-.sh, .th, .ih { cursor: grab; display: flex; justify-content: flex-end; padding: 2px; flex-shrink: 0; z-index: 20; }
+/* .sh = Sticky Header, .th = Text Header, .ih = Image Header */
+.sh, .th { 
+    cursor: grab; display: flex; justify-content: flex-end; padding: 2px; flex-shrink: 0; z-index: 20; 
+}
 .sh { height: 24px; background: rgba(0,0,0,0.08); border-radius: 4px 4px 0 0; }
 .th { height: 16px; background: rgba(0,0,0,0.1); margin-bottom: 2px; border-radius: 2px; }
 
-/* Modified Image Header: Full width top bar for easier dragging */
-.ih { 
-    position: absolute; top: 0; left: 0; right: 0; 
-    height: 24px; background: rgba(0,0,0,0.2); 
-    opacity: 0; transition: opacity 0.2s;
+/* Image Header: Covers the whole image area (except bottom padding) to allow dragging from anywhere */
+.ih {
+    position: absolute; top: 0; left: 0; width: 100%; 
+    /* Height is calc(100% - 20px) to leave space for resize handle at bottom */
+    height: calc(100% - 20px); 
+    background: rgba(0,0,0,0); /* Transparent */
+    cursor: grab; z-index: 30;
+    transition: background 0.2s;
 }
-.ib:hover .ih { opacity: 1; }
+.ib:hover .ih {
+    /* Show a faint tint on hover so user knows it's interactive */
+    background: rgba(0,0,0,0.05);
+}
 
 .sh:active, .th:active, .ih:active { cursor: grabbing; }
 
 /* Close Button */
-.close { background: #ff5555; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-weight: bold; line-height: 1; opacity: 0.8; }
+.close { 
+    background: #ff5555; color: white; border: none; 
+    width: 24px; height: 24px; border-radius: 50%; 
+    cursor: pointer; font-weight: bold; line-height: 1; 
+    opacity: 0.8; 
+    /* For Images: Position Absolute inside the overlay */
+    position: relative; 
+}
+.ib .close {
+    position: absolute; top: 5px; right: 5px; opacity: 0; transition: opacity 0.2s;
+}
+.ib:hover .close { opacity: 1; }
+
 .close:hover { opacity: 1; }
 
 /* Inputs */

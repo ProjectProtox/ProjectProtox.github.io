@@ -1,5 +1,5 @@
 // PURPOSE:
-// Registers event listeners including Image Upload and Paste handling.
+// Registers event listeners including global PASTE support for images.
 // PUBLIC API CONTRACT:
 // - initEvents(): Attaches all listeners.
 
@@ -36,6 +36,7 @@ function zoom(dir) {
     draw();
 }
 
+// Reusable Image Processor
 function handleImageFile(file) {
     const { c } = elements;
     if(!file) return;
@@ -52,10 +53,14 @@ function handleImageFile(file) {
             ctx.drawImage(img, 0, 0, w, h);
             const base64 = canvas.toDataURL('image/jpeg', 0.7);
             
+            // Center placement
             const cx = (c.width/2 - state.ox)/state.z - 100;
             const cy = (c.height/2 - state.oy)/state.z - 100;
             
             createDOM('ib', null, cx, cy, null, base64);
+            
+            // Auto switch to hand
+            setTool('s', document.getElementById('btn-hand'));
         };
         img.src = evt.target.result;
     };
@@ -85,14 +90,15 @@ export function initEvents() {
         e.target.value = ''; 
     };
 
-    // PASTE EVENT (Ctrl+V)
+    // PASTE EVENT (Global Ctrl+V)
     window.addEventListener('paste', (e) => {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let index in items) {
-            const item = items[index];
-            if (item.kind === 'file' && item.type.startsWith('image/')) {
-                const blob = item.getAsFile();
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
                 handleImageFile(blob);
+                e.preventDefault(); // Stop pasting into textarea if focused
+                return; // Stop after first image
             }
         }
     });

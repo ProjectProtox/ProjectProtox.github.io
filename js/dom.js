@@ -1,7 +1,8 @@
 // PURPOSE:
-// Creates HTML DOM elements (Notes, Texts, Images).
+// Creates HTML DOM elements.
 // PUBLIC API CONTRACT:
-// - createDOM(type, id, wx, wy, bg, content, skipSave): 'type' can be 'sn', 'tx', or 'ib'.
+// - createDOM(): Handles DOM creation for all types.
+// - Fixed Image (.ib) structure to ensure the drag-overlay (.ih) works with new CSS.
 
 import { state } from './state.js';
 import { save } from './network.js';
@@ -22,16 +23,19 @@ export function createDOM(type, id, wx, wy, bg, content = null, skipSave = false
     // Save on resize end (mouseup on container)
     div.onmouseup = (e) => save();
     
-    // Header Handle
+    // Header Handle (Overlay for images, Top bar for text)
     const h = document.createElement('div'); 
     h.className = type==='sn' ? 'sh' : (type==='tx' ? 'th' : 'ih');
     
     const b = document.createElement('button'); b.className='close'; b.innerHTML='×';
     b.onclick = () => { div.remove(); save(); };
     
-    // Drag Logic
+    // Drag Logic attached to header
     h.onmousedown = e => {
-        e.stopPropagation(); if(e.target===b) return; e.preventDefault();
+        e.stopPropagation(); 
+        if(e.target===b) return; 
+        e.preventDefault();
+        
         let lx=e.clientX, ly=e.clientY;
         const move = em => {
             div.dataset.wx = parseFloat(div.dataset.wx) + (em.clientX - lx) / state.z;
@@ -39,8 +43,13 @@ export function createDOM(type, id, wx, wy, bg, content = null, skipSave = false
             lx=em.clientX; ly=em.clientY;
             updateDOMPos();
         };
-        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
-        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+        const up = () => { 
+            document.removeEventListener('mousemove', move); 
+            document.removeEventListener('mouseup', up); 
+            save(); 
+        };
+        document.addEventListener('mousemove', move); 
+        document.addEventListener('mouseup', up);
     };
     
     if (type === 'ib') {
@@ -48,17 +57,21 @@ export function createDOM(type, id, wx, wy, bg, content = null, skipSave = false
         const img = document.createElement('img');
         img.src = content || ''; 
         div.appendChild(img);
-        // Header on top of image
-        div.appendChild(h);
+        
+        // Append Overlay (Handle) ON TOP of image
+        // Close button goes inside handle
         h.appendChild(b);
+        div.appendChild(h);
     } else {
         // TEXT/NOTE LOGIC
+        // Header first
         div.appendChild(h);
+        h.appendChild(b);
+        
         const inp = type==='sn' ? document.createElement('textarea') : document.createElement('input');
         inp.onmousedown = e => e.stopPropagation();
         inp.oninput = save;
         div.appendChild(inp);
-        h.appendChild(b);
     }
 
     document.body.appendChild(div);
