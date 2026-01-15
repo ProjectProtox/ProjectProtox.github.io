@@ -1,0 +1,63 @@
+/* PURPOSE:
+// Global styling for the whiteboard, homescreen, and UI overlays.
+// PUBLIC API CONTRACT:
+// - Defines visual appearance for all classes used in index.html and dynamic DOM elements. */
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
+
+/* --- HOMESCREEN --- */
+#home-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #f5f5f5; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.card {
+    background: white; padding: 40px; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center;
+    width: 90%; max-width: 400px;
+}
+.card h1 { margin-bottom: 20px; font-size: 24px; color: #333; }
+.card input {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    border: 2px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; transition: 0.2s;
+}
+.card input:focus { border-color: #4a90e2; }
+.card button {
+    width: 100%; padding: 12px; background: #4a90e2; color: white;
+    border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.card button:hover { background: #357abd; }
+
+/* --- UI ELEMENTS --- */
+.wb-ui { display: none; }
+#c{position:absolute;top:0;left:0;z-index:0;touch-action:none}
+.tb{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:8px;z-index:1000}
+.btn{width:36px;height:36px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:0.1s}
+.btn:hover{background:#f0f7ff;border-color:#4a90e2}
+.btn.on{background:#4a90e2;color:#fff;border-color:#4a90e2}
+.sep{width:1px;height:24px;background:#ddd;align-self:center}
+
+input[type=color]{width:30px;height:30px;border:none;cursor:pointer;background:none}
+input[type=range]{width:80px;cursor:pointer}
+
+/* --- NOTES & TEXT --- */
+.sn, .tx{position:absolute;will-change:transform, left, top;z-index:10}
+.sn{width:200px;background:#feff9c;box-shadow:0 4px 10px rgba(0,0,0,0.2);border-radius:4px;display:flex;flex-direction:column}
+.sh{height:24px;background:rgba(0,0,0,0.08);cursor:grab;display:flex;justify-content:flex-end;padding:2px;border-radius:4px 4px 0 0}
+.sh:active{cursor:grabbing}
+.close{background:#ff5555;color:white;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-weight:bold;line-height:1}
+textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none;font-family:inherit;min-height:120px}
+
+.tx{background:rgba(255,255,255,0.85);border:1px solid #333;padding:4px;border-radius:4px}
+.th{height:16px;background:rgba(0,0,0,0.1);cursor:grab;margin-bottom:2px;border-radius:2px}
+.tx input{border:none;background:none;outline:none;font-size:16px;min-width:150px;font-family:inherit}
+
+/* --- OVERLAYS --- */
+#status{position:fixed;bottom:10px;left:10px;background:white;padding:5px 10px;border-radius:20px;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px;z-index:1000}
+.dot{width:8px;height:8px;border-radius:50%;background:#ccc}
+.dot.ok{background:#2ecc71} .dot.load{background:#f1c40f} .dot.err{background:#e74c3c}
+.zc{position:fixed;bottom:15px;right:15px;background:#fff;padding:5px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;gap:4px;z-index:1000}
+.zb{padding:5px 10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-weight:bold}
+.zl{font-size:12px;min-width:45px;text-align:center;line-height:28px;font-weight:600}
+/* END OF FILE */

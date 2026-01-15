@@ -5,67 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Protox Whiteboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-/* --- STYLES --- */
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;overflow:hidden;background:#f5f5f5;user-select:none;overscroll-behavior:none}
-
-/* --- HOMESCREEN STYLES --- */
-#home-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #f5f5f5; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.card {
-    background: white; padding: 40px; border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center;
-    width: 90%; max-width: 400px;
-}
-.card h1 { margin-bottom: 20px; font-size: 24px; color: #333; }
-.card input {
-    width: 100%; padding: 12px; margin-bottom: 15px;
-    border: 2px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; transition: 0.2s;
-}
-.card input:focus { border-color: #4a90e2; }
-.card button {
-    width: 100%; padding: 12px; background: #4a90e2; color: white;
-    border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
-}
-.card button:hover { background: #357abd; }
-
-/* --- WHITEBOARD STYLES --- */
-/* Elements hidden by default until room is joined */
-.wb-ui { display: none; }
-
-/* Canvas Layer */
-#c{position:absolute;top:0;left:0;z-index:0;touch-action:none}
-/* UI Layer (Above Canvas) */
-.tb{position:fixed;top:15px;left:50%;transform:translateX(-50%);background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;gap:8px;z-index:1000}
-.btn{width:36px;height:36px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:0.1s}
-.btn:hover{background:#f0f7ff;border-color:#4a90e2}
-.btn.on{background:#4a90e2;color:#fff;border-color:#4a90e2}
-.sep{width:1px;height:24px;background:#ddd;align-self:center}
-/* Inputs */
-input[type=color]{width:30px;height:30px;border:none;cursor:pointer;background:none}
-input[type=range]{width:80px;cursor:pointer}
-/* Notes & Text (World Layer) */
-.sn, .tx{position:absolute;will-change:transform, left, top;z-index:10}
-.sn{width:200px;background:#feff9c;box-shadow:0 4px 10px rgba(0,0,0,0.2);border-radius:4px;display:flex;flex-direction:column}
-.sh{height:24px;background:rgba(0,0,0,0.08);cursor:grab;display:flex;justify-content:flex-end;padding:2px;border-radius:4px 4px 0 0}
-.sh:active{cursor:grabbing}
-.close{background:#ff5555;color:white;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-weight:bold;line-height:1}
-textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none;font-family:inherit;min-height:120px}
-.tx{background:rgba(255,255,255,0.85);border:1px solid #333;padding:4px;border-radius:4px}
-.th{height:16px;background:rgba(0,0,0,0.1);cursor:grab;margin-bottom:2px;border-radius:2px}
-.tx input{border:none;background:none;outline:none;font-size:16px;min-width:150px;font-family:inherit}
-/* Status */
-#status{position:fixed;bottom:10px;left:10px;background:white;padding:5px 10px;border-radius:20px;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px;z-index:1000}
-.dot{width:8px;height:8px;border-radius:50%;background:#ccc}
-.dot.ok{background:#2ecc71} .dot.load{background:#f1c40f} .dot.err{background:#e74c3c}
-.zc{position:fixed;bottom:15px;right:15px;background:#fff;padding:5px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;gap:4px;z-index:1000}
-.zb{padding:5px 10px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-weight:bold}
-.zl{font-size:12px;min-width:45px;text-align:center;line-height:28px;font-weight:600}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -73,391 +13,39 @@ textarea{flex:1;border:none;background:none;padding:8px;resize:none;outline:none
 <div id="home-screen" style="display: none;">
     <div class="card">
         <h1>Protox Whiteboard</h1>
-        <p style="margin-bottom: 15px; color: #666; font-size: 14px;">Enter a room name to join a session.</p>
-        <input type="text" id="roomInput" placeholder="e.g. LAN_Party_2026" onkeydown="if(event.key==='Enter') joinRoom()">
-        <button onclick="joinRoom()">Join Room</button>
+        <p>Enter a room name to join a session.</p>
+        <input type="text" id="roomInput" placeholder="e.g. LAN_Party_2026">
+        <button id="btnJoin">Join Room</button>
     </div>
 </div>
 
 <!-- WHITEBOARD UI -->
 <div class="tb wb-ui">
-    <button id="btn-hand" class="btn on" onclick="setT('s',this)" title="Hand (Move Board) [Space]">✋</button>
-    <button class="btn" onclick="setT('n',this)" title="Sticky Note">📝</button>
-    <button class="btn" onclick="setT('t',this)" title="Text">🔤</button>
+    <button id="btn-hand" class="btn on" data-tool="s" title="Hand (Move Board) [Space]">✋</button>
+    <button class="btn" data-tool="n" title="Sticky Note">📝</button>
+    <button class="btn" data-tool="t" title="Text">🔤</button>
     <div class="sep"></div>
-    <button class="btn" onclick="setT('d',this)" title="Draw">✏️</button>
-    <button class="btn" onclick="setT('r',this)" title="Rectangle">⬜</button>
-    <button class="btn" onclick="setT('c',this)" title="Circle">⭕</button>
+    <button class="btn" data-tool="d" title="Draw">✏️</button>
+    <button class="btn" data-tool="r" title="Rectangle">⬜</button>
+    <button class="btn" data-tool="c" title="Circle">⭕</button>
     <div class="sep"></div>
     <input type="color" id="col" value="#000000">
     <input type="range" id="sz" min="2" max="20" value="3" title="Size">
     <div class="sep"></div>
-    <button class="btn" onclick="undo()" title="Undo My Last Action">↩️</button>
-    <button class="btn" onclick="wipe()" title="Delete All">🗑️</button>
+    <button class="btn" id="btn-undo" title="Undo My Last Action">↩️</button>
+    <button class="btn" id="btn-wipe" title="Delete All">🗑️</button>
 </div>
 
 <div id="status" class="wb-ui"><div class="dot" id="sd"></div><span id="st">Connecting...</span></div>
 <div class="zc wb-ui">
-    <button class="zb" onclick="zoom(-1)">−</button>
+    <button class="zb" id="btn-zoom-out">−</button>
     <span class="zl" id="zl">100%</span>
-    <button class="zb" onclick="zoom(1)">+</button>
+    <button class="zb" id="btn-zoom-in">+</button>
 </div>
 
 <canvas id="c" class="wb-ui"></canvas>
 
-<script>
-// PURPOSE: Whiteboard with auto-reset to Hand tool after creating Notes/Text.
-// PUBLIC API CONTRACT:
-// - joinRoom(), init(), draw(), apply(), save(), wipe()
-// - undo(): Removes the last element created by THIS session only.
-
-// --- CONFIG ---
-const SB_URL = 'https://pydxnbhtibgmrqlxxwqe.supabase.co'; 
-const SB_KEY = 'sb_publishable_ntQsU9qIUGNVRNlhY9NErA_POoAFWat';
-// --------------
-
-// --- ROUTING ---
-const urlParams = new URLSearchParams(location.search);
-const ROOM = urlParams.get('raum');
-
-if (!ROOM) {
-    document.getElementById('home-screen').style.display = 'flex';
-} else {
-    document.querySelectorAll('.wb-ui').forEach(el => el.style.display = 'flex');
-    document.getElementById('c').style.display = 'block'; 
-    document.title = "Board: " + ROOM;
-    setTimeout(init, 10); 
-}
-
-function joinRoom() {
-    const input = document.getElementById('roomInput');
-    const val = input.value.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-    if(val) window.location.search = '?raum=' + val;
-    else alert("Please enter a room name");
-}
-
-// ============================================
-// --- WHITEBOARD APP ---
-// ============================================
-
-const c = document.getElementById('c'), ctx = c.getContext('2d', {alpha:false});
-const col = document.getElementById('col'), sz = document.getElementById('sz');
-const sd = document.getElementById('sd'), st = document.getElementById('st');
-
-// State & Identity
-const MY_ID = Math.random().toString(36).substr(2, 9); // Session ID for Undo
-let myHistory = []; // Stack of IDs created by me
-
-let t='s', dragging=false, panning=false, sx, sy, ox=0, oy=0, z=1, el=[], dp=[], remote=false, loaded=false;
-let spacePressed = false;
-let saveTimer;
-
-// Init Supabase
-const { createClient } = supabase;
-const sb = createClient(SB_URL, SB_KEY);
-
-function resize() { c.width=innerWidth; c.height=innerHeight; draw(); }
-window.onresize = resize;
-
-async function init() {
-    sd.className='dot load'; st.innerText='Loading ' + ROOM;
-    resize();
-    try {
-        let { data, error } = await sb.from('board').select('content').eq('id', ROOM).single();
-        if (error && error.code === 'PGRST116') {
-            await sb.from('board').insert({ id: ROOM, content: {} });
-            data = { content: {} };
-        } 
-        if (data && data.content) apply(data.content, true);
-        loaded = true;
-        sd.className='dot ok'; st.innerText='Online: ' + ROOM;
-        sb.channel('wb').on('postgres_changes', 
-            { event: 'UPDATE', schema: 'public', table: 'board', filter: `id=eq.${ROOM}` }, 
-            (p) => { if(p.new.content) { remote=true; apply(p.new.content, false); remote=false; } }
-        ).subscribe();
-    } catch (e) {
-        sd.className='dot err'; st.innerText='Error';
-        console.error(e);
-    }
-}
-
-// --- INPUT HANDLING (PANNING & SHORTCUTS) ---
-
-// Spacebar Listener
-window.onkeydown = e => {
-    if(e.code === 'Space' && !spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-        spacePressed = true;
-        c.style.cursor = 'grab';
-    }
-};
-window.onkeyup = e => {
-    if(e.code === 'Space') {
-        spacePressed = false;
-        c.style.cursor = t==='s'?'grab':'default';
-    }
-};
-
-c.onmousedown = e => {
-    sx=e.clientX; sy=e.clientY;
-    
-    // Middle Mouse Button (1) OR Spacebar OR Hand Tool -> PANNING
-    if (e.button === 1 || spacePressed || t === 's') {
-        panning = true;
-        c.style.cursor = 'grabbing';
-        e.preventDefault(); // Prevent scroll on middle click
-        return;
-    }
-
-    // Tools
-    const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
-    if(t==='n') {
-        createDOM('sn', null, wx, wy);
-        // Auto-switch back to Hand
-        setT('s', document.getElementById('btn-hand'));
-    }
-    else if(t==='t') {
-        createDOM('tx', null, wx, wy);
-        // Auto-switch back to Hand
-        setT('s', document.getElementById('btn-hand'));
-    }
-    else { dragging=true; dp=[{x:wx,y:wy}]; }
-};
-
-c.onmousemove = e => {
-    if(panning) { 
-        ox+=e.clientX-sx; oy+=e.clientY-sy; sx=e.clientX; sy=e.clientY; 
-        draw(); 
-        updateDOMPos(); // Update sticky notes while panning
-    }
-    else if(dragging) {
-        const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
-        dp.push({x:wx,y:wy}); draw();
-    }
-};
-
-c.onmouseup = e => {
-    if(panning) { 
-        panning=false; 
-        c.style.cursor = (spacePressed || t==='s') ? 'grab' : 'default'; 
-    }
-    else if(dragging) {
-        dragging=false;
-        const wx=(e.clientX-ox)/z, wy=(e.clientY-oy)/z;
-        const start=dp[0];
-        const lw = parseInt(sz.value);
-        const id = uid(); // Generate ID for Canvas Element
-        
-        let newEl = null;
-
-        if(t==='d' && dp.length>1) {
-            newEl = {t:'p', pts:dp, col:col.value, lw:lw, id:id, owner:MY_ID};
-        } else if(t==='r'||t==='c') {
-            const w=Math.abs(wx-start.x), h=Math.abs(wy-start.y);
-            if(w>2) {
-                newEl = {t, x:Math.min(wx,start.x), y:Math.min(wy,start.y), w, h, col:col.value, lw:lw, id:id, owner:MY_ID};
-            }
-        }
-        
-        if (newEl) {
-            el.push(newEl);
-            myHistory.push({ type: 'el', id: id }); // Track for Undo
-            save();
-        }
-        dp=[]; draw();
-    }
-};
-
-c.onwheel = e => { e.preventDefault(); zoom(e.deltaY<0 ? 1 : -1); };
-
-// --- RENDER ENGINE ---
-
-function draw() {
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0,0,c.width,c.height);
-    ctx.translate(ox, oy); ctx.scale(z, z);
-    
-    el.forEach(e => {
-        ctx.lineWidth = e.lw || 2; ctx.strokeStyle = e.col; ctx.fillStyle = e.col;
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.beginPath();
-        if(e.t==='p') {
-            if(e.pts.length<2)return;
-            ctx.moveTo(e.pts[0].x, e.pts[0].y);
-            e.pts.forEach(p=>ctx.lineTo(p.x,p.y));
-            ctx.stroke();
-        } else if(e.t==='r') ctx.strokeRect(e.x,e.y,e.w,e.h);
-        else if(e.t==='c') {
-            const r = Math.sqrt(e.w**2+e.h**2)/2;
-            ctx.arc(e.x+e.w/2,e.y+e.h/2,r,0,Math.PI*2);
-            ctx.stroke();
-        }
-    });
-
-    if(dragging && dp.length>1 && t!=='s') {
-        ctx.lineWidth = parseInt(sz.value); ctx.strokeStyle = col.value;
-        ctx.lineCap='round'; ctx.lineJoin='round';
-        if(t==='d') {
-            ctx.beginPath(); ctx.moveTo(dp[0].x, dp[0].y);
-            dp.forEach(p=>ctx.lineTo(p.x,p.y));
-            ctx.stroke();
-        } else if(t==='r' || t==='c') {
-            const start=dp[0];
-            const curr=dp[dp.length-1];
-            const w=Math.abs(curr.x-start.x), h=Math.abs(curr.y-start.y);
-            const x=Math.min(curr.x,start.x), y=Math.min(curr.y,start.y);
-            ctx.beginPath();
-            if(t==='r') ctx.strokeRect(x,y,w,h);
-            else { const r=Math.sqrt(w**2+h**2)/2; ctx.arc(x+w/2,y+h/2,r,0,Math.PI*2); ctx.stroke(); }
-        }
-    }
-    updateDOMPos();
-}
-
-function updateDOMPos() {
-    document.querySelectorAll('.sn, .tx').forEach(div => {
-        const wx = parseFloat(div.dataset.wx);
-        const wy = parseFloat(div.dataset.wy);
-        div.style.left = (wx * z + ox) + 'px';
-        div.style.top = (wy * z + oy) + 'px';
-    });
-}
-
-// --- LOGIC & UNDO ---
-
-function undo() {
-    if (myHistory.length === 0) return;
-    const lastItem = myHistory.pop();
-    
-    // 1. Check DOM elements (Notes/Text)
-    const domEl = document.querySelector(`[data-id="${lastItem.id}"]`);
-    if (domEl) {
-        domEl.remove();
-        save();
-        return;
-    }
-
-    // 2. Check Canvas elements
-    const idx = el.findIndex(e => e.id === lastItem.id);
-    if (idx !== -1) {
-        el.splice(idx, 1);
-        draw();
-        save();
-    }
-}
-
-function apply(d, force) {
-    el = d.el || [];
-    const active = document.activeElement;
-    const keep = new Set();
-    
-    // Helper to sync DOM
-    const syncDOM = (list, type) => {
-        (list||[]).forEach(n => {
-            keep.add(n.id);
-            let div = document.querySelector(`.${type}[data-id="${n.id}"]`);
-            if(!div) div = createDOM(type, n.id, n.x, n.y, n.bg);
-            div.dataset.wx = n.x; div.dataset.wy = n.y;
-            if(type==='sn') div.style.background = n.bg;
-            const input = div.querySelector(type==='sn'?'textarea':'input');
-            if(force || active!==input) input.value = n.txt;
-        });
-    };
-
-    syncDOM(d.notes, 'sn');
-    syncDOM(d.texts, 'tx');
-    
-    document.querySelectorAll('.sn,.tx').forEach(e => { if(!keep.has(e.dataset.id)) e.remove(); });
-    draw();
-}
-
-function save() {
-    if(remote || !loaded) return;
-    sd.className='dot load';
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-        const notes = Array.from(document.querySelectorAll('.sn')).map(n => ({
-            id: n.dataset.id, x: parseFloat(n.dataset.wx), y: parseFloat(n.dataset.wy), 
-            bg: n.style.background, txt: n.querySelector('textarea').value
-        }));
-        const texts = Array.from(document.querySelectorAll('.tx')).map(t => ({
-            id: t.dataset.id, x: parseFloat(t.dataset.wx), y: parseFloat(t.dataset.wy), 
-            txt: t.querySelector('input').value
-        }));
-        
-        // Add owners to elements if missing (legacy support)
-        const elWithOwners = el.map(e => ({...e, owner: e.owner || 'anon'}));
-
-        await sb.from('board').update({ content: {el: elWithOwners, notes, texts} }).eq('id', ROOM);
-        sd.className='dot ok';
-    }, 500);
-}
-
-// --- HELPERS ---
-
-function uid() { return Math.random().toString(36).substr(2, 9); }
-
-function setT(mode, btn) {
-    t = mode;
-    document.querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-}
-
-function zoom(dir) {
-    const oldZ = z;
-    if(dir>0) z = Math.min(z*1.2, 5);
-    else z = Math.max(z/1.2, 0.1);
-    const cx = c.width/2, cy = c.height/2;
-    ox = cx - (cx - ox) * (z/oldZ);
-    oy = cy - (cy - oy) * (z/oldZ);
-    document.getElementById('zl').innerText = Math.round(z*100)+'%';
-    draw();
-}
-
-function createDOM(type, id, wx, wy, bg) {
-    const isNew = !id;
-    id = id || uid();
-    
-    const div = document.createElement('div');
-    div.className = type; 
-    div.dataset.id = id;
-    div.dataset.wx = wx; div.dataset.wy = wy;
-    if(bg) div.style.background = bg;
-    
-    const h = document.createElement('div'); h.className = type==='sn'?'sh':'th';
-    const b = document.createElement('button'); b.className='close'; b.innerHTML='×';
-    b.onclick = () => { div.remove(); save(); };
-    
-    h.onmousedown = e => {
-        e.stopPropagation(); if(e.target===b) return; e.preventDefault();
-        let lx=e.clientX, ly=e.clientY;
-        const move = em => {
-            div.dataset.wx = parseFloat(div.dataset.wx) + (em.clientX - lx) / z;
-            div.dataset.wy = parseFloat(div.dataset.wy) + (em.clientY - ly) / z;
-            lx=em.clientX; ly=em.clientY;
-            updateDOMPos();
-        };
-        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); save(); };
-        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
-    };
-    
-    div.appendChild(h);
-    const inp = type==='sn' ? document.createElement('textarea') : document.createElement('input');
-    inp.onmousedown = e => e.stopPropagation();
-    inp.oninput = save;
-    div.appendChild(inp);
-    h.appendChild(b);
-    document.body.appendChild(div);
-    updateDOMPos();
-    
-    if(!remote && isNew) { 
-        myHistory.push({ type: type, id: id }); // Track for Undo
-        save(); setTimeout(()=>inp.focus(),10); 
-    }
-    return div;
-}
-
-function wipe() { if(confirm('Alles löschen?')) { el=[]; document.querySelectorAll('.sn,.tx').forEach(e=>e.remove()); draw(); save(); } }
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
 // END OF FILE
