@@ -8,13 +8,13 @@
 import { state, elements } from './state.js';
 import { initNetwork } from './network.js';
 import { initEvents } from './events.js';
-import { draw } from './render.js';
 
 // Routing
 const urlParams = new URLSearchParams(location.search);
 state.ROOM = urlParams.get('raum');
 
 if (!state.ROOM) {
+    // Show Home (Default via CSS), Hide Whiteboard
     document.getElementById('home-screen').style.display = 'flex';
     
     const join = () => {
@@ -28,8 +28,11 @@ if (!state.ROOM) {
     document.getElementById('roomInput').onkeydown = (e) => { if(e.key==='Enter') join(); };
 
 } else {
+    // Hide Home, Show Whiteboard
+    document.getElementById('home-screen').style.display = 'none';
     document.querySelectorAll('.wb-ui').forEach(el => el.style.display = 'flex');
     elements.c.style.display = 'block'; 
+    
     document.title = "Board: " + state.ROOM;
     
     elements.c.width=innerWidth; 
