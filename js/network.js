@@ -45,10 +45,12 @@ export function save() {
     state.saveTimer = setTimeout(async () => {
         const notes = Array.from(document.querySelectorAll('.sn')).map(n => ({
             id: n.dataset.id, x: parseFloat(n.dataset.wx), y: parseFloat(n.dataset.wy), 
+            w: n.style.width, h: n.style.height,
             bg: n.style.background, txt: n.querySelector('textarea').value
         }));
         const texts = Array.from(document.querySelectorAll('.tx')).map(t => ({
             id: t.dataset.id, x: parseFloat(t.dataset.wx), y: parseFloat(t.dataset.wy), 
+            w: t.style.width, h: t.style.height,
             txt: t.querySelector('input').value
         }));
         
@@ -69,6 +71,8 @@ export function apply(d, force) {
             let div = document.querySelector(`.${type}[data-id="${n.id}"]`);
             if(!div) div = createDOM(type, n.id, n.x, n.y, n.bg, true);
             div.dataset.wx = n.x; div.dataset.wy = n.y;
+            if(n.w) div.style.width = n.w;
+            if(n.h) div.style.height = n.h;
             if(type==='sn') div.style.background = n.bg;
             const input = div.querySelector(type==='sn'?'textarea':'input');
             if(force || active!==input) input.value = n.txt;

@@ -20,6 +20,12 @@ export function createDOM(type, id, wx, wy, bg, skipSave = false) {
     div.dataset.wx = wx; div.dataset.wy = wy;
     if(bg) div.style.background = bg;
     
+    // Save on resize end (mouseup on container)
+    div.onmouseup = (e) => {
+        // Prevent triggering if clicking child elements, but resize usually targets container edge
+        save();
+    };
+    
     const h = document.createElement('div'); h.className = type==='sn'?'sh':'th';
     const b = document.createElement('button'); b.className='close'; b.innerHTML='×';
     b.onclick = () => { div.remove(); save(); };
