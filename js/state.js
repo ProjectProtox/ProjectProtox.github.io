@@ -1,13 +1,13 @@
 // PURPOSE:
-// Manages the global mutable state of the application.
+// Manages global state. IMPORTANT: 'elements' are now fetched via a function to avoid crashes if DOM isn't ready.
 // PUBLIC API CONTRACT:
-// - exports 'state' object containing canvas, tools, identity, and history data.
-// - exports 'elements' object to reference DOM UI nodes (buttons, canvas, inputs).
+// - refreshElements(): Needs to be called once DOM is ready.
+// - state: Global mutable state.
 
 export const state = {
-    t: 's',          // Current tool
-    dragging: false, // Is drawing/dragging
-    panning: false,  // Is panning
+    t: 's',          
+    dragging: false, 
+    panning: false,  
     spacePressed: false,
     
     // Viewport
@@ -16,9 +16,9 @@ export const state = {
     z: 1,
 
     // Data
-    el: [],          // Canvas elements
-    dp: [],          // Drawing points
-    myHistory: [],   // Local undo stack
+    el: [],          
+    dp: [],          
+    myHistory: [],   
     
     // Identity
     MY_ID: Math.random().toString(36).substr(2, 9),
@@ -31,12 +31,18 @@ export const state = {
 };
 
 export const elements = {
-    c: document.getElementById('c'),
-    ctx: document.getElementById('c').getContext('2d', {alpha:false}),
-    col: document.getElementById('col'),
-    sz: document.getElementById('sz'),
-    sd: document.getElementById('sd'),
-    st: document.getElementById('st'),
-    zl: document.getElementById('zl')
+    c: null, ctx: null, col: null, sz: null, sd: null, st: null, zl: null
 };
+
+// Call this after DOMContentLoaded
+export function refreshElements() {
+    const c = document.getElementById('c');
+    elements.c = c;
+    elements.ctx = c ? c.getContext('2d', {alpha:false}) : null;
+    elements.col = document.getElementById('col');
+    elements.sz = document.getElementById('sz');
+    elements.sd = document.getElementById('sd');
+    elements.st = document.getElementById('st');
+    elements.zl = document.getElementById('zl');
+}
 // END OF FILE

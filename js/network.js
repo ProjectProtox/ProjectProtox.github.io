@@ -1,19 +1,26 @@
 // PURPOSE:
-// Handles all Supabase database interactions (Init, Load, Save, Realtime).
+// Handles Supabase interactions. Initializes safely.
 // PUBLIC API CONTRACT:
-// - initNetwork(): Connects to Supabase, loads room, sets up subscriptions.
-// - save(): Persists current state to DB (debounced).
-// - apply(data, force): Updates local state from remote data.
+// - initNetwork(): initializes client and subscriptions.
 
 import { CONFIG } from './config.js';
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { createDOM } from './dom.js';
 
-const { createClient } = supabase;
-const sb = createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
+let sb = null;
 
 export async function initNetwork() {
+    // Safety check: is Supabase library loaded?
+    if (typeof supabase === 'undefined') {
+        console.error("Supabase library not loaded!");
+        alert("Fehler: Verbindungsserver nicht erreichbar. Bitte Seite neu laden.");
+        return;
+    }
+
+    const { createClient } = supabase;
+    sb = createClient(CONFIG.SB_URL, CONFIG.SB_KEY);
+
     elements.sd.className='dot load'; elements.st.innerText='Loading ' + state.ROOM;
     
     try {
@@ -38,7 +45,7 @@ export async function initNetwork() {
 }
 
 export function save() {
-    if(state.remote || !state.loaded) return;
+    if(state.remote || !state.loaded || !sb) return;
     elements.sd.className='dot load';
     clearTimeout(state.saveTimer);
     

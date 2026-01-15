@@ -1,50 +1,73 @@
 // PURPOSE:
-// Main entry point. Handles routing, room joining, and initialization sequence.
+// Main entry point. Contains robust logic to prevent crashes if DOM isn't ready.
 // PUBLIC API CONTRACT:
-// - Parses URL parameters for room name.
-// - Toggles between Homescreen and Whiteboard UI.
-// - Bootstraps network and event systems.
+// - Waits for DOMContentLoaded.
+// - Initializes DOM elements references.
+// - Checks URL and Routing.
+// - Hides/Shows UI accordingly.
 
-import { state, elements } from './state.js';
+import { state, elements, refreshElements } from './state.js';
 import { initNetwork } from './network.js';
 import { initEvents } from './events.js';
 
-// Routing
-const urlParams = new URLSearchParams(location.search);
-state.ROOM = urlParams.get('raum');
+// Wait for browser to be ready
+window.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Grab DOM elements safely
+    refreshElements();
 
-if (!state.ROOM) {
-    // Show Home, Hide Whiteboard
-    document.getElementById('home-screen').style.display = 'flex';
-    
-    const join = () => {
-        const input = document.getElementById('roomInput');
-        // Allow slightly more characters but keep it safe
-        const val = input.value.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '_');
-        if(val) window.location.search = '?raum=' + val;
-        else alert("Please enter a room name");
-    };
-    
-    document.getElementById('btnJoin').onclick = join;
-    document.getElementById('roomInput').onkeydown = (e) => { if(e.key==='Enter') join(); };
+    // 2. Check Routing
+    const urlParams = new URLSearchParams(location.search);
+    state.ROOM = urlParams.get('raum');
 
-} else {
-    // Hide Home
-    document.getElementById('home-screen').style.display = 'none';
-    
-    // Show Whiteboard UI
-    document.querySelectorAll('.wb-ui').forEach(el => el.style.display = 'flex');
-    
-    // Canvas requires block display, not flex
-    elements.c.style.display = 'block'; 
-    
-    document.title = "Board: " + state.ROOM;
-    
-    // Resize immediately to ensure canvas is visible
-    elements.c.width = innerWidth; 
-    elements.c.height = innerHeight;
-    
-    initEvents();
-    initNetwork();
-}
+    // 3. Routing Logic
+    if (!state.ROOM) {
+        // --- HOMESCREEN MODE ---
+        // Ensure Home is visible, Whiteboard hidden
+        const home = document.getElementById('home-screen');
+        if(home) home.style.display = 'flex';
+        
+        // Define Join Action
+        const join = () => {
+            const input = document.getElementById('roomInput');
+            const val = input.value.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+            
+            if(val.length > 0) {
+                window.location.search = '?raum=' + val;
+            } else {
+                alert("Bitte einen Raumnamen eingeben.");
+            }
+        };
+        
+        // Attach Listeners
+        const btn = document.getElementById('btnJoin');
+        const inp = document.getElementById('roomInput');
+        
+        if(btn) btn.onclick = join;
+        if(inp) inp.onkeydown = (e) => { if(e.key==='Enter') join(); };
+
+    } else {
+        // --- WHITEBOARD MODE ---
+        
+        // Hide Home
+        const home = document.getElementById('home-screen');
+        if(home) home.style.display = 'none';
+        
+        // Show Whiteboard UI
+        document.querySelectorAll('.wb-ui').forEach(el => el.style.display = 'flex');
+        
+        // Setup Canvas
+        if (elements.c) {
+            elements.c.style.display = 'block'; 
+            elements.c.width = innerWidth; 
+            elements.c.height = innerHeight;
+        }
+
+        document.title = "Board: " + state.ROOM;
+        
+        // Initialize Systems
+        initEvents();
+        initNetwork();
+    }
+});
 // END OF FILE
