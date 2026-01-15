@@ -1,13 +1,13 @@
 // PURPOSE:
-// Registers event listeners including robust Image Upload, Paste handling, and Keyboard shortcuts.
+// Registers event listeners including Image Upload, Paste handling, Shortcuts AND PDF Export.
 // PUBLIC API CONTRACT:
 // - initEvents(): Attaches all listeners.
-// - handleImageFile(): Processes raw files into Base64 for the whiteboard.
 
 import { state, elements } from './state.js';
 import { draw } from './render.js';
 import { save } from './network.js';
 import { createDOM, uid } from './dom.js';
+import { exportToPDF } from './export.js';
 
 export function setTool(mode, btn) {
     state.t = mode;
@@ -37,7 +37,6 @@ function zoom(dir) {
     draw();
 }
 
-// Reusable Image Processor
 function handleImageFile(file) {
     const { c } = elements;
     if(!file || !file.type.startsWith('image/')) return;
@@ -79,8 +78,11 @@ export function initEvents() {
     };
     document.getElementById('btn-zoom-in').onclick = () => zoom(1);
     document.getElementById('btn-zoom-out').onclick = () => zoom(-1);
+    
+    // PDF Export
+    document.getElementById('btn-export').onclick = exportToPDF;
 
-    // IMAGE UPLOAD (Button)
+    // IMAGE UPLOAD
     document.getElementById('btn-img').onclick = () => {
         document.getElementById('inp-img').value = '';
         document.getElementById('inp-img').click();
@@ -89,7 +91,7 @@ export function initEvents() {
         handleImageFile(e.target.files[0]);
     };
 
-    // PASTE EVENT
+    // PASTE
     window.addEventListener('paste', (e) => {
         const clipboardData = e.clipboardData || window.clipboardData;
         if (!clipboardData) return;
@@ -102,23 +104,16 @@ export function initEvents() {
         }
     });
 
-    // Keyboard Shortcuts (Using addEventListener for better stability)
+    // Shortcuts
     window.addEventListener('keydown', e => {
-        // UNDO: Ctrl+Z or Cmd+Z
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-            // If typing in a text field, let browser handle text-undo.
-            // If NOT typing, trigger board object undo.
             if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-                e.preventDefault();
-                undo();
+                e.preventDefault(); undo();
             }
             return;
         }
-
-        // PAN: Spacebar
         if (e.code === 'Space' && !state.spacePressed && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-            state.spacePressed = true; 
-            c.style.cursor = 'grab';
+            state.spacePressed = true; c.style.cursor = 'grab';
         }
     });
 
@@ -129,7 +124,7 @@ export function initEvents() {
         }
     });
 
-    // Canvas Mouse
+    // Mouse Interaction
     c.onmousedown = e => {
         state.sx=e.clientX; state.sy=e.clientY;
         if (e.button === 1 || state.spacePressed || state.t === 's') {
@@ -138,14 +133,8 @@ export function initEvents() {
 
         const wx=(e.clientX-state.ox)/state.z, wy=(e.clientY-state.oy)/state.z;
         
-        if(state.t==='n') { 
-            createDOM('sn', null, wx, wy); 
-            setTool('s', document.getElementById('btn-hand')); 
-        }
-        else if(state.t==='t') { 
-            createDOM('tx', null, wx, wy); 
-            setTool('s', document.getElementById('btn-hand')); 
-        }
+        if(state.t==='n') { createDOM('sn', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
+        else if(state.t==='t') { createDOM('tx', null, wx, wy); setTool('s', document.getElementById('btn-hand')); }
         else { state.dragging=true; state.dp=[{x:wx,y:wy}]; }
     };
 

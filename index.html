@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Protox Whiteboard</title>
+<!-- Database -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- PDF Export Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,6 +41,8 @@
     <div class="sep"></div>
     <button class="btn" id="btn-undo" title="Undo My Last Action">↩️</button>
     <button class="btn" id="btn-wipe" title="Delete All">🗑️</button>
+    <div class="sep"></div>
+    <button class="btn" id="btn-export" title="Export as PDF">🖨️</button>
 </div>
 
 <!-- Hidden File Input -->
